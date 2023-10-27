@@ -2,6 +2,8 @@
 
 [![License](https://img.shields.io/badge/License-AAUCNS-336B81.svg)](./LICENSE)
 
+![Lie-plusplus logo](./resources/lie-plusplus-logo.png)
+
 Maintainer: [Alessandro Fornasier](mailto:alessandro.fornasier@aau.at)
 
 - [Description](#description)
