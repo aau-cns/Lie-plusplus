@@ -46,7 +46,7 @@ list(APPEND libs LiePlusPlus Eigen3::Eigen)
 ```
 ## Usage
 
-Two mini examples on how to use the base groups of the library and how to compose them to create new groups
+Two mini examples on how to use the base groups of the library and how to compose them to create new groups. For usage of Lie++ in the context of filter design have a look at [MSCEqF](https://github.com/aau-cns/MSCEqF)
 
 ### Base groups usage
 
@@ -150,6 +150,13 @@ If you use this software in an academic research setting, please cite the corres
   title={Equivariant Symmetries for Inertial Navigation Systems},
   author={Fornasier, Alessandro and Ge, Yixiao and van Goor, Pieter and Mahony, Robert and Weiss, Stephan},
   journal={arXiv preprint arXiv:2309.03765},
+  year={2023}
+}
+
+@article{fornasier2023msceqf,
+  title={MSCEqF: A Multi State Constraint Equivariant Filter for Vision-aided Inertial Navigation},
+  author={Fornasier, Alessandro and van Goor, Pieter and Allak, Eren and Mahony, Robert and Weiss, Stephan},
+  journal={arXiv preprint arXiv:2311.11649},
   year={2023}
 }
 ```
