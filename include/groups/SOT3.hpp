@@ -30,6 +30,7 @@ template <typename FPType>
 class SOT3
 {
  public:
+  using Scalar = FPType;                            //!< The underlying scalar type
   using SO3Type = SO3<FPType>;                      //!< The underlying SO3 type
   using VectorType = Eigen::Matrix<FPType, 4, 1>;   //!< R4 Vectorspace element type (isomorphic to Lie Algebra sot3)
   using MatrixType = Eigen::Matrix<FPType, 4, 4>;   //!< Lie Algebra / Lie Group matrix type

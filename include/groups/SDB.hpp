@@ -25,11 +25,14 @@ namespace group
  * @tparam FPType. Floating point type (float, double, long double)
  *
  * @note Equivariant Symmetries for Inertial Navigation Systems [https://arxiv.org/abs/2309.03765]
+ * @note MSCEqF: A Multi State Constraint Equivariant Filter for Vision-aided Inertial Navigation
+ * [https://arxiv.org/abs/2311.11649]
  */
 template <typename FPType>
 class SemiDirectBias
 {
  public:
+  using Scalar = FPType;                            //!< The underlying scalar type
   using SE3Type = group::SEn3<FPType, 1>;           //!< The underlying SE3 type
   using SE23Type = group::SEn3<FPType, 2>;          //!< The underlying SE23 type
   using VectorType = Eigen::Matrix<FPType, 15, 1>;  //!< The underlying R15 vector type

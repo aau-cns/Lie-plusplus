@@ -24,12 +24,14 @@ namespace group
  *
  * @tparam FPType. Floating point type (float, double, long double)
  *
- * @note MSCEqF: A Multi State Constraint Equivariant Filter for Vision-aided Inertial Navigation []
+ * @note MSCEqF: A Multi State Constraint Equivariant Filter for Vision-aided Inertial Navigation
+ * [https://arxiv.org/abs/2311.11649]
  */
 template <typename FPType>
 class In
 {
  public:
+  using Scalar = FPType;                            //!< The underlying scalar type
   using MatrixType = Eigen::Matrix<FPType, 3, 3>;   //!< The underlying 3x3 group matrix type
   using TMatrixType = Eigen::Matrix<FPType, 4, 4>;  //!< The underlying 4x4 transformation matrix type
   using VectorType = Eigen::Matrix<FPType, 4, 1>;   //!< The underlying R4 vector type

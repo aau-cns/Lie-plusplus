@@ -26,13 +26,14 @@ namespace group
  * @tparam FPType. Floating point type (float, double, long double)
  *
  * @note Equivariant Filter Design for Inertial Navigation Systems with Input Measurement Biases
- * [https://arxiv.org/abs/2202.02058] []
+ * [https://arxiv.org/abs/2202.02058] [https://ieeexplore.ieee.org/document/9811778/]
  * @note Equivariant Symmetries for Inertial Navigation Systems [https://arxiv.org/abs/2309.03765]
  */
 template <typename FPType>
 class Tangent
 {
  public:
+  using Scalar = FPType;                            //!< The underlying scalar type
   using SE3Type = group::SEn3<FPType, 1>;           //!< The underlying SE3 type
   using SE23Type = group::SEn3<FPType, 2>;          //!< The underlying SE23 type
   using VectorType = Eigen::Matrix<FPType, 18, 1>;  //!< The underlying R18 vector type

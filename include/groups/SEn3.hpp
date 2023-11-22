@@ -36,6 +36,7 @@ class SEn3
   static_assert(n > 0, "SEn3: n needs to be grater than 0");
 
  public:
+  using Scalar = FPType;        //!< The underlying scalar type
   using SO3Type = SO3<FPType>;  //!< The underlying SO3 type
   using VectorType =
       Eigen::Matrix<FPType, 3 + 3 * n, 1>;  //!< R6 Vectorspace element type (isomorphic to Lie Algebra se3)
