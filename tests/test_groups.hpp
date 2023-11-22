@@ -15,6 +15,8 @@
 #ifndef TEST_GROUPS_HPP
 #define TEST_GROUPS_HPP
 
+#include <unsupported/Eigen/MatrixFunctions>
+
 #include "groups/In.hpp"
 #include "groups/SDB.hpp"
 #include "groups/SOT3.hpp"
@@ -83,6 +85,17 @@ TYPED_TEST(TGGroupsTest, TestExpLog)
     x = TypeParam::VectorType::Random();
     y = TypeParam::log(TypeParam::exp(x));
     MatrixEquality(x, y);
+
+    X = TypeParam::exp(x);
+
+    Eigen::Matrix<typename TypeParam::Scalar, 10, 10> W = Eigen::Matrix<typename TypeParam::Scalar, 10, 10>::Zero();
+    W.block(0, 0, 9, 9) = SEn3<typename TypeParam::Scalar, 2>::adjoint(x.segment(0, 9));
+    W.block(0, 9, 9, 1) = x.segment(9, 9);
+
+    auto E = W.exp();
+
+    MatrixEquality(X.D().Adjoint(), E.block(0, 0, 9, 9));
+    MatrixEquality(X.delta(), E.block(0, 9, 9, 1));
   }
 }
 
