@@ -16,7 +16,6 @@
 #include <array>
 
 #include "SO3.hpp"
-#include "SEn3.hpp"
 
 namespace group
 {
@@ -24,28 +23,28 @@ namespace group
  * @brief the Inhomogeneous Galileian group (G3). This group is the group of 3D rotations,
  * translations in space and time, and transformations between frames of reference
  * that differ only by constant relative motion.
- * 
+ *
  * @tparam FPType. Floating point type (float, double, long double)
  *
  * @note Galilei invariant theories [https://arxiv.org/abs/math-ph/0604002]
- * @note Constructive Equivariant Observer Design for Inertial Velocity-Aided 
+ * @note Constructive Equivariant Observer Design for Inertial Velocity-Aided
  * Attitude [https://arxiv.org/pdf/2209.03564.pdf]
  */
 template <typename FPType>
 class G3
 {
  public:
-  using Scalar = FPType;        //!< The underlying scalar type
-  using SO3Type = SO3<FPType>;  //!< The underlying SO3 type
-  using SE23Type = SEn3<FPType, 2>;                   //!< The underlying SE23 type
+  using Scalar = FPType;                              //!< The underlying scalar type
+  using SO3Type = SO3<FPType>;                        //!< The underlying SO3 type
   using VectorType = Eigen::Matrix<FPType, 10, 1>;    //!< R10 Vectorspace element type (isomorphic to Lie Algebra g3)
   using MatrixType = Eigen::Matrix<FPType, 5, 5>;     //!< Lie Algebra / Lie Group matrix type
   using TMatrixType = Eigen::Matrix<FPType, 10, 10>;  //!< Transformation matrix type
+  using IsometriesType = std::array<typename SO3Type::VectorType, 2>;  //!< Vector of translations (Isometries)
 
   /**
    * @brief Construct an identity G3 object
    */
-  G3() : D_(SE23Type()), s_(0.0) {}
+  G3() : C_(SO3Type()), t_(), s_(0.0) { t_.fill(SO3Type::VectorType::Zero()); }
 
   /**
    * @brief Construct a G3 object from a given normalized quaternion, an array of vectors, and a scalar factor.
@@ -54,7 +53,7 @@ class G3
    * @param t Array of R3 vectors
    * @param s Scalar factor
    */
-  G3(const typename SO3Type::QuaternionType& q, const SE23Type::IsometriesType& t, const Scalar& s) : D_(q, t), s_(s) {}
+  G3(const typename SO3Type::QuaternionType& q, const IsometriesType& t, const Scalar& s) : C_(q), t_(t), s_(s) {}
 
   /**
    * @brief Construct a G3 object from a given rotation matrix, an array of vectors, and a scalar factor.
@@ -63,7 +62,7 @@ class G3
    * @param t Array of R3 vectors
    * @param s Scalar factor
    */
-  G3(const typename SO3Type::MatrixType& R, const SE23Type::IsometriesType& t, const Scalar& s) : D_(R, t), s_(s) {}
+  G3(const typename SO3Type::MatrixType& R, const IsometriesType& t, const Scalar& s) : C_(R), t_(t), s_(s) {}
 
   /**
    * @brief Construct a G3 object from a given SO3 object, an array of vectors, and a scalar factor.
@@ -72,22 +71,18 @@ class G3
    * @param t Array of R3 vectors
    * @param s Scalar factor
    */
-  G3(const SO3Type& C, const SE23Type::IsometriesType& t, const Scalar& s) : D_(C, t), s_(s) {}
-
-  /**
-   * @brief Construct a G3 object from a given SE23 object, and a scalar factor.
-   *
-   * @param D SE23 group element
-   * @param s Scalar factor
-   */
-  G3(const SE23Type& D,const Scalar& s) : D_(D), s_(s) {}
+  G3(const SO3Type& C, const IsometriesType& t, const Scalar& s) : C_(C), t_(t), s_(s) {}
 
   /**
    * @brief Construct a G3 object from a given matrix
    *
-   * @param T G3 group element in matrix form
+   * @param X G3 group element in matrix form
    */
-  G3(const MatrixType& T) : D_(T), s_(T(3, 4)){}
+  G3(const MatrixType& X) : C_(X.template block<3, 3>(0, 0)), t_(), s_(X(3, 4))
+  {
+    t_[0] = X.template block<3, 1>(0, 3);
+    t_[1] = X.template block<3, 1>(0, 4);
+  }
 
   /**
    * @brief wedge operator, transform a vector in R10 to a matrix in g3
@@ -99,8 +94,10 @@ class G3
   [[nodiscard]] static const MatrixType wedge(const VectorType& u)
   {
     MatrixType U = MatrixType::Zero();
-    U = SE23Type::wedge(u.template block<9, 1>(0, 0));
-    U(3, 4) = u.template block<1, 1>(9, 0);
+    U.template block<3, 3>(0, 0) = SO3Type::wedge(u.template block<3, 1>(0, 0));
+    U.template block<3, 1>(0, 3) = u.template block<3, 1>(3, 0);
+    U.template block<3, 1>(0, 4) = u.template block<3, 1>(6, 0);
+    U(3, 4) = u(9);
     return U;
   }
 
@@ -114,8 +111,10 @@ class G3
   [[nodiscard]] static const VectorType vee(const MatrixType& U)
   {
     VectorType u = VectorType::Zero();
-    u.template block<9, 1>(0, 0) = SE23Type::vee(U);
-    u.template block<1, 1>(9, 0) = U(3, 4);
+    u.template block<3, 1>(0, 0) = SO3Type::vee(U.template block<3, 3>(0, 0));
+    u.template block<3, 1>(3, 0) = U.template block<3, 1>(0, 3);
+    u.template block<3, 1>(6, 0) = U.template block<3, 1>(0, 4);
+    u(9) = U(3, 4);
     return u;
   }
 
@@ -129,8 +128,13 @@ class G3
   [[nodiscard]] static const TMatrixType adjoint(const VectorType& u)
   {
     TMatrixType ad = TMatrixType::Zero();
-    ad.template block<9, 9>(0, 0) = SE23Type::adjoint(u.template block<9, 1>(0, 0));
-    ad.template block<3, 3>(6, 3) = -u.template block<1, 1>(9, 0) * SO3Type::MatrixType::Identity();
+    typename SO3Type::MatrixType W = SO3Type::wedge(u.template block<3, 1>(0, 0));
+    ad.template block<3, 3>(0, 0) = W;
+    ad.template block<3, 3>(3, 0) = SO3Type::wedge(u.template block<3, 1>(3, 0));
+    ad.template block<3, 3>(3, 3) = W;
+    ad.template block<3, 3>(6, 0) = SO3Type::wedge(u.template block<3, 1>(6, 0));
+    ad.template block<3, 3>(6, 3) = -u(9) * SO3Type::MatrixType::Identity();
+    ad.template block<3, 3>(6, 6) = W;
     ad.template block<3, 1>(6, 9) = u.template block<3, 1>(3, 0);
     return ad;
   }
@@ -144,11 +148,20 @@ class G3
    */
   [[nodiscard]] static const TMatrixType leftJacobian(const VectorType& u)
   {
+    typename SO3Type::VectorType w = u.template block<3, 1>(0, 0);
+    typename SO3Type::VectorType v = u.template block<3, 1>(3, 0);
+    typename SO3Type::VectorType p = u.template block<3, 1>(6, 0);
+    Scalar s = u(9);
+    FPType ang = w.norm();
+    typename SO3Type::MatrixType SO3JL = SO3Type::leftJacobian(w);
     TMatrixType J = TMatrixType::Identity();
-    J.template block<9, 9>(0, 0) = SE23Type::leftJacobian(u.template block<9, 1>(0, 0));
-    J.template block<3, 3>(6, 0) -= u.template block<1, 1>(9, 0) * G3leftJacobianQ2(u.template block<3, 1>(0, 0), u.template block<3, 1>(3, 0));
-    J.template block<3, 3>(6, 3) = -u.template block<1, 1>(9, 0) * SO3Type::MatrixType::Identity();
-    J.template block<3, 1>(6, 9) = SO3Type::Gamma2(u.template block<3, 1>(0, 0)) * u.template block<3, 1>(3, 0);
+    J.template block<3, 3>(0, 0) = SO3JL;
+    J.template block<3, 3>(3, 0) = SE3leftJacobianQ(w, v);
+    J.template block<3, 3>(3, 3) = SO3JL;
+    J.template block<3, 3>(6, 0) = SE3leftJacobianQ(w, p) - s * G3leftJacobianQ2(w, v);
+    J.template block<3, 3>(6, 3) = -s * SO3Type::MatrixType::Identity();
+    J.template block<3, 3>(6, 6) = SO3JL;
+    J.template block<3, 1>(6, 9) = SO3Type::Gamma2(w) * v;
     return J;
   }
 
@@ -171,10 +184,15 @@ class G3
    */
   [[nodiscard]] static const G3 exp(const VectorType& u)
   {
-    MatrixType expU = SE23Type.exp(u.template block<9, 1>(0, 0)).asMatrix();
-    expU.template block<3, 1>(0, 4) += u.template block<1, 1>(9, 0) * SO3Type::Gamma2(u.template block<3, 1>(0, 0)) * u.template block<3, 1>(3, 0);
-    expU(3, 4) = u.template block<1, 1>(9, 0);
-    return G3(expU);
+    typename SO3Type::VectorType w = u.template block<3, 1>(0, 0);
+    typename SO3Type::VectorType v = u.template block<3, 1>(3, 0);
+    typename SO3Type::VectorType p = u.template block<3, 1>(6, 0);
+    Scalar s = u(9);
+    typename SO3Type::MatrixType SO3JL = SO3Type::leftJacobian(w);
+    IsometriesType t;
+    t[0] = SO3JL * v;
+    t[1] = SO3JL * p + s * SO3Type::Gamma2(w) * v;
+    return G3(SO3Type::exp(w), t, s);
   }
 
   // /**
@@ -198,11 +216,13 @@ class G3
   [[nodiscard]] static const VectorType log(const G3& X)
   {
     VectorType u = VectorType::Zero();
-    u.template block<3, 1>(0, 0) = SO3Type::log(X.D_.C_);
+    u.template block<3, 1>(0, 0) = SO3Type::log(X.C_);
     typename SO3Type::MatrixType invSO3JL = SO3Type::leftJacobian(u.template block<3, 1>(0, 0)).inverse();
-    u.template block<3, 1>(3, 0) = invSO3JL * X.D_.v();
-    u.template block<3, 1>(6, 0) = invSO3JL * (X.D_.p() - X.s_ * SO3Type::Gamma2(u.template block<3, 1>(0, 0)) * u.template block<3, 1>(3, 0));
-    u.template block<1, 1>(9, 0) = X.s_;
+    u.template block<3, 1>(3, 0) = invSO3JL * X.t_[0];
+    u.template block<3, 1>(6, 0) =
+        invSO3JL * (X.t_[1] - X.s_ * SO3Type::Gamma2(u.template block<3, 1>(0, 0)) * u.template block<3, 1>(3, 0));
+    u(9) = X.s_;
+
     return u;
   }
 
@@ -228,10 +248,10 @@ class G3
    */
   [[nodiscard]] const G3 operator*(const G3& other) const
   {
-    MatrixType D = (D_ * other.D_).asMatrix();
-    D.template block<3, 1>(0, 4) += D_.v() * other.s_;
-    D.template block<1, 1>(3, 4) = other.s_ + s_;
-    return G3(D);
+    IsometriesType t;
+    t[0] = C_.R() * other.t_[0] + t_[0];
+    t[1] = C_.R() * other.t_[1] + t_[0] * other.s_ + t_[1];
+    return G3(C_ * other.C_, t, s_ + other.s_);
   }
 
   /**
@@ -246,10 +266,12 @@ class G3
    */
   [[nodiscard]] const MatrixType operator*(const MatrixType& other) const
   {
-    MatrixType D = D_ * other;
-    D.template block<3, 1>(0, 4) += D_.v() * other.template block<1, 1>(3, 4);
-    D.template block<1, 1>(3, 4) = other.template block<1, 1>(3, 4) + s_;
-    return D;
+    MatrixType res = MatrixType::Zero();
+    res.template block<3, 3>(0, 0) = C_.R() * other.template block<3, 3>(0, 0);
+    res.template block<3, 1>(0, 3) = C_.R() * other.template block<3, 1>(0, 3) + t_[0];
+    res.template block<3, 1>(0, 4) = C_.R() * other.template block<3, 1>(0, 4) + t_[0] * other(3, 4) + t_[1];
+    res(3, 4) = other(3, 4) + s_;
+    return res;
   }
 
   /**
@@ -261,8 +283,9 @@ class G3
    */
   const G3& multiplyRight(const G3& other)
   {
-    D_.multiplyRight(other.D_);
-    D_.v() += D_.v() * other.s_;
+    C_.multiplyRight(other.C_);
+    t_[0] = (C_.R() * other.t_[0] + t_[0]).eval();
+    t_[1] = (C_.R() * other.t_[1] + t_[0] * other.s_ + t_[1]).eval();
     s_ += other.s_;
     return *this;
   }
@@ -276,8 +299,9 @@ class G3
    */
   const G3& multiplyLeft(const G3& other)
   {
-    D_.multiplyLeft(other.D_);
-    D_.v() += other.D_.v() * s_;
+    C_.multiplyLeft(other.C_);
+    t_[0] = (other.C_.R() * t_[0] + other.t_[0]).eval();
+    t_[1] = (other.C_.R() * t_[1] + other.t_[0] * s_ + other.t_[1]).eval();
     s_ += other.s_;
     return *this;
   }
@@ -289,53 +313,46 @@ class G3
    */
   [[nodiscard]] const G3 inv() const
   {
-    MatrixType invG = D_.inv().asMatrix();
-    invG.template block<3, 1>(0, 4) += D_.R().transpose() * D_.v() * s_;
-    invG.template block<1, 1>(3, 4) = -s_;
-    return G3(invG);
+    IsometriesType t;
+    t[0] = -C_.R().transpose() * t_[0];
+    t[1] = -C_.R().transpose() * (t_[1] - s_ * t_[0]);
+    return G3(C_.R().transpose(), t, -s_);
   }
-
-  /**
-   * @brief Get a constant copy of the SE23 object as a matrix
-   *
-   * @return G3 group element in matrix form
-   */
-  [[nodiscard]] const MatrixType T() const { return D_.T(); }
 
   /**
    * @brief Get a constant reference to the SE23 rotation matrix
    *
    * @return Rotation matrix
    */
-  [[nodiscard]] const typename SO3Type::MatrixType& R() const { return D_.R(); }
+  [[nodiscard]] const typename SO3Type::MatrixType& R() const { return C_.R(); }
 
   /**
    * @brief Get a constant reference to the SE23 normalized quaternion
    *
    * @return Quaternion
    */
-  [[nodiscard]] const typename SO3Type::QuaternionType& q() const { return D_.C_.q(); }
+  [[nodiscard]] const typename SO3Type::QuaternionType& q() const { return C_.q(); }
 
   /**
    * @brief Get a constant reference to the SE23 translation vectors (isometries)
    *
    * @return Array of R3 vectors
    */
-  [[nodiscard]] const typename SE23Type::IsometriesType& t() const { return D_.t(); }
+  [[nodiscard]] const IsometriesType& t() const { return t_; }
 
   /**
    * @brief Get a constant referece to the first isometry (velocity) of SE23
    *
    * @return R3 vector
    */
-  [[nodiscard]] const typename SO3Type::VectorType& v() const { return D_.v(); }
+  [[nodiscard]] const typename SO3Type::VectorType& v() const { return t_[0]; }
 
   /**
    * @brief Get a constant referece to the second isometry (position) of SEn3 with n > 1
    *
    * @return R3 vector
    */
-  [[nodiscard]] const typename SO3Type::VectorType& p() const { return D_.p(); }
+  [[nodiscard]] const typename SO3Type::VectorType& p() const { return t_[1]; }
 
   /**
    * @brief Get a constant reference to the scalar factor
@@ -349,9 +366,13 @@ class G3
    *
    * @return G3 group element in matrix form
    */
-  [[nodiscard]] const MatrixType asMatrix() const {
-    MatrixType X = D_.asMatrix();
-    X.template block<1, 1>(3, 4) = s_;
+  [[nodiscard]] const MatrixType asMatrix() const
+  {
+    MatrixType X = MatrixType::Identity();
+    X.template block<3, 3>(0, 0) = C_.R();
+    X.template block<3, 1>(0, 3) = t_[0];
+    X.template block<3, 1>(0, 4) = t_[1];
+    X(3, 4) = s_;
     return X;
   }
 
@@ -362,7 +383,9 @@ class G3
    */
   void fromMatrix(const MatrixType& X)
   {
-    D_.fromT(X);
+    C_.fromR(X.template block<3, 3>(0, 0));
+    t_[0] = X.template block<3, 1>(0, 3);
+    t_[1] = X.template block<3, 1>(0, 4);
     s_ = X(3, 4);
   }
 
@@ -374,10 +397,13 @@ class G3
   [[nodiscard]] const TMatrixType Adjoint() const
   {
     TMatrixType Ad = TMatrixType::Identity();
-    Ad.template block<9, 9>(0, 0) = D_.Adjoint();
-    Ad.template block<3, 3>(6, 0) = - s_ * SO3Type::wedge(D_.v()) * D_.R();
-    Ad.template block<3, 3>(6, 3) = - s_ * D_.R();
-    Ad.template block<3, 1>(6, 9) = D_.v();
+    Ad.template block<3, 3>(0, 0) = C_.R();
+    Ad.template block<3, 3>(3, 0) = SO3Type::wedge(t_[0]) * C_.R();
+    Ad.template block<3, 3>(3, 3) = C_.R();
+    Ad.template block<3, 3>(6, 0) = SO3Type::wedge(t_[1] - s_ * t_[0]) * C_.R();
+    Ad.template block<3, 3>(6, 3) = -s_ * C_.R();
+    Ad.template block<3, 3>(6, 6) = C_.R();
+    Ad.template block<3, 1>(6, 9) = t_[0];
     return Ad;
   }
 
@@ -389,9 +415,13 @@ class G3
   [[nodiscard]] const TMatrixType invAdjoint() const
   {
     TMatrixType Ad = TMatrixType::Identity();
-    Ad.template block<9, 9>(0, 0) = D_.invAdjoint();
-    Ad.template block<3, 3>(6, 3) = D_.R().transpose() * s_;
-    Ad.template block<3, 1>(6, 9) = - D_.R().transpose() * D_.v();
+    Ad.template block<3, 3>(0, 0) = C_.R().transpose();
+    Ad.template block<3, 3>(3, 0) = -C_.R().transpose() * SO3Type::wedge(t_[0]);
+    Ad.template block<3, 3>(3, 3) = C_.R().transpose();
+    Ad.template block<3, 3>(6, 0) = -C_.R().transpose() * SO3Type::wedge(t_[1]);
+    Ad.template block<3, 3>(6, 3) = C_.R().transpose() * s_;
+    Ad.template block<3, 3>(6, 6) = C_.R().transpose();
+    Ad.template block<3, 1>(6, 9) = -C_.R().transpose() * t_[0];
     return Ad;
   }
 
@@ -456,7 +486,7 @@ class G3
     {
       return 0.5 * SO3Type::MatrixType::Identity() + 1 / 3 * wedge(u);
     }
-    SO3Type::VectorType ax = u / ang;
+    typename SO3Type::VectorType ax = u / ang;
     FPType ang_p2 = pow(ang, 2);
     FPType s = sin(ang);
     FPType c = cos(ang);
@@ -465,15 +495,15 @@ class G3
     return c1 * SO3Type::MatrixType::Identity() + c2 * wedge(ax) + (0.5 - c1) * ax * ax.transpose();
   }
 
-
-  SE23Type D_;    //!< The SE23 element of the symmetry group ancting on the extended pose
-  Scalar s_;      //!< Scalar factor of the G3 group
+  SO3Type C_;         //!< The SE23 element of the symmetry group ancting on the extended pose
+  IsometriesType t_;  //!< The translation vectors (isometries) of the G3 element
+  Scalar s_;          //!< Scalar factor of the G3 group
 
   static constexpr FPType eps_ = 1e-6;  //!< Epsilon
 };
 
-using G3d = G3<double>;   //!< The G3 group with double precision floating point
-using G3f = G3<float>;    //!< The G3 group with single precision floating point
+using G3d = G3<double>;  //!< The G3 group with double precision floating point
+using G3f = G3<float>;   //!< The G3 group with single precision floating point
 
 }  // namespace group
 
