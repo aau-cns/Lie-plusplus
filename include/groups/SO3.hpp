@@ -94,13 +94,13 @@ class SO3
   [[nodiscard]] static const TMatrixType adjoint(const VectorType& u) { return wedge(u); }
 
   /**
-   * @brief SO3 J2 matrix
+   * @brief SO3 Gamma2 matrix
    *
    * @param u R3 vector
    *
-   * @return SO3 J2 matrix
+   * @return SO3 Gamma2 matrix
    */
-  [[nodiscard]] static const TMatrixType J2(const VectorType& u)
+  [[nodiscard]] static const TMatrixType Gamma2(const VectorType& u)
   {
     FPType ang = u.norm();
     if (ang < eps_)

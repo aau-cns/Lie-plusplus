@@ -21,13 +21,15 @@
 namespace group
 {
 /**
- * @brief the Inhomogeneous Galileian group (G3)
- *
+ * @brief the Inhomogeneous Galileian group (G3). This group is the group of 3D rotations,
+ * translations in space and time, and transformations between frames of reference
+ * that differ only by constant relative motion.
+ * 
  * @tparam FPType. Floating point type (float, double, long double)
  *
- * @note Group Formulation for Consistent Non-Linear Estiamtion
- * @note /todo: add reference
- * @note /todo: add reference
+ * @note Galilei invariant theories [https://arxiv.org/abs/math-ph/0604002]
+ * @note Constructive Equivariant Observer Design for Inertial Velocity-Aided 
+ * Attitude [https://arxiv.org/pdf/2209.03564.pdf]
  */
 template <typename FPType>
 class G3
@@ -146,7 +148,7 @@ class G3
     J.template block<9, 9>(0, 0) = SE23Type::leftJacobian(u.template block<9, 1>(0, 0));
     J.template block<3, 3>(6, 0) -= u.template block<1, 1>(9, 0) * G3leftJacobianQ2(u.template block<3, 1>(0, 0), u.template block<3, 1>(3, 0));
     J.template block<3, 3>(6, 3) = -u.template block<1, 1>(9, 0) * SO3Type::MatrixType::Identity();
-    J.template block<3, 1>(6, 9) = SO3Type::J2(u.template block<3, 1>(0, 0)) * u.template block<3, 1>(3, 0);
+    J.template block<3, 1>(6, 9) = SO3Type::Gamma2(u.template block<3, 1>(0, 0)) * u.template block<3, 1>(3, 0);
     return J;
   }
 
@@ -170,7 +172,7 @@ class G3
   [[nodiscard]] static const G3 exp(const VectorType& u)
   {
     MatrixType expU = SE23Type.exp(u.template block<9, 1>(0, 0)).asMatrix();
-    expU.template block<3, 1>(0, 4) += u.template block<1, 1>(9, 0) * SO3Type::J2(u.template block<3, 1>(0, 0)) * u.template block<3, 1>(3, 0);
+    expU.template block<3, 1>(0, 4) += u.template block<1, 1>(9, 0) * SO3Type::Gamma2(u.template block<3, 1>(0, 0)) * u.template block<3, 1>(3, 0);
     expU(3, 4) = u.template block<1, 1>(9, 0);
     return G3(expU);
   }
@@ -199,7 +201,7 @@ class G3
     u.template block<3, 1>(0, 0) = SO3Type::log(X.D_.C_);
     typename SO3Type::MatrixType invSO3JL = SO3Type::leftJacobian(u.template block<3, 1>(0, 0)).inverse();
     u.template block<3, 1>(3, 0) = invSO3JL * X.D_.v();
-    u.template block<3, 1>(6, 0) = invSO3JL * (X.D_.p() - X.s_ * SO3Type::J2(u.template block<3, 1>(0, 0)) * u.template block<3, 1>(3, 0));
+    u.template block<3, 1>(6, 0) = invSO3JL * (X.D_.p() - X.s_ * SO3Type::Gamma2(u.template block<3, 1>(0, 0)) * u.template block<3, 1>(3, 0));
     u.template block<1, 1>(9, 0) = X.s_;
     return u;
   }
@@ -319,7 +321,7 @@ class G3
    *
    * @return Array of R3 vectors
    */
-  [[nodiscard]] const typename SE23Type::IsometriesType& t() const { return D_.t_; }
+  [[nodiscard]] const typename SE23Type::IsometriesType& t() const { return D_.t(); }
 
   /**
    * @brief Get a constant referece to the first isometry (velocity) of SE23
@@ -336,6 +338,13 @@ class G3
   [[nodiscard]] const typename SO3Type::VectorType& p() const { return D_.p(); }
 
   /**
+   * @brief Get a constant reference to the scalar factor
+   *
+   * @return Scalar factor
+   */
+  [[nodiscard]] const Scalar& s() const { return s_; }
+
+  /**
    * @brief Get a constant copy of the G3 object as a matrix
    *
    * @return G3 group element in matrix form
@@ -347,13 +356,14 @@ class G3
   }
 
   /**
-   * @brief Set SE23 object value from given matrix
+   * @brief Set G3 object value from given matrix
    *
-   * @param T SE23 group element in matrix form
+   * @param X G3 group element in matrix form
    */
-  void fromT(const MatrixType& T)
+  void fromMatrix(const MatrixType& X)
   {
-    D_.fromT(T);
+    D_.fromT(X);
+    s_ = X(3, 4);
   }
 
   /**

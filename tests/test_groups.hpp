@@ -21,6 +21,7 @@
 #include "groups/SDB.hpp"
 #include "groups/SOT3.hpp"
 #include "groups/TG.hpp"
+#include "groups/G3.hpp"
 
 #include "utils/tools.hpp"
 
@@ -35,6 +36,157 @@ typedef testing::Types<SE3d, SE3f, SE23f, SE23d> SEn3Groups;
 typedef testing::Types<SDBf, SDBd> SDBGroups;
 typedef testing::Types<TGf, TGd> TGGroups;
 typedef testing::Types<Inf, Ind> INGroups;
+typedef testing::Types<G3f, G3d> G3Groups;
+
+/**
+ * @brief Inhomogeneous Galileian group specific tests
+ */
+template <typename T>
+class G3GroupsTest : public testing::Test
+{
+};
+TYPED_TEST_SUITE(G3GroupsTest, G3Groups);
+
+TYPED_TEST(G3GroupsTest, G3GroupsConstructors)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    {
+      auto X = TypeParam();
+      MatrixEquality(X.asMatrix(), TypeParam::G3Type::MatrixType::Identity());
+    }
+    auto q = TypeParam::SE23Type::SO3Type::QuaternionType::UnitRandom();
+    typename TypeParam::SE23Type::IsometriesType t = {TypeParam::SE23Type::SO3Type::VectorType::Random(),
+                                                      TypeParam::SE23Type::SO3Type::VectorType::Random()};
+    typename TypeParam::Scalar s = TypeParam::Scalar::Random();
+    {
+      auto X = TypeParam(typename TypeParam::SE23Type(q, t), s);
+      auto Y = TypeParam(q, t, s);
+      MatrixEquality(X.asMatrix(), Y.asMatrix());
+      auto Z = X;
+      MatrixEquality(Z.asMatrix(), X.asMatrix());
+    }
+  }
+}
+
+TYPED_TEST(G3GroupsTest, G3Setters)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    auto M = TypeParam::MatrixType::Identity();
+    M.template block<3, 3>(0, 0) = TypeParam::SE23Type::SO3Type::QuaternionType::UnitRandom().toRotationMatrix();
+    M.template block<3, 1>(0, 3) = TypeParam::SE23Type::SO3Type::VectorType::Random();
+    M.template block<3, 1>(0, 4) = TypeParam::SE23Type::SO3Type::VectorType::Random();
+    M.template block<1, 1>(3, 4) = TypeParam::Scalar::Random();
+    auto X = TypeParam();
+    X.fromMatrix(M);
+    MatrixEquality(X.asMatrix(), M);
+  }
+}
+
+TYPED_TEST(G3GroupsTest, TestExpLog)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    typename TypeParam::VectorType x = TypeParam::VectorType::Zero();
+    typename TypeParam::VectorType y = TypeParam::log(TypeParam::exp(x));
+    MatrixEquality(x, y);
+
+    x = 1e-12 * TypeParam::VectorType::Random();
+    auto X = TypeParam::exp(x);
+    y = TypeParam::log(X);
+    MatrixEquality(x, y);
+
+    x = TypeParam::VectorType::Random();
+    y = TypeParam::log(TypeParam::exp(x));
+    MatrixEquality(x, y);
+
+    auto X = TypeParam::exp(x);
+    auto adj = G3::adjoint(x);
+
+    MatrixEquality(X.Adjoint(), adj.exp());
+  }
+}
+
+TYPED_TEST(G3GroupsTest, TestAssociativity)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    auto X1 = TypeParam::exp(TypeParam::VectorType::Random());
+    auto X2 = TypeParam::exp(TypeParam::VectorType::Random());
+    auto X3 = TypeParam::exp(TypeParam::VectorType::Random());
+
+    auto Z1 = (X1 * X2) * X3;
+    auto Z2 = X1 * (X2 * X3);
+
+    MatrixEquality(Z1.asMatrix(), Z2.asMatrix());
+  }
+}
+
+TYPED_TEST(G3GroupsTest, TestIdentity)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto I = TypeParam();
+    typename TypeParam::SE23Type::MatrixType Imat = TypeParam::SE23Type::MatrixType::Identity();
+
+    MatrixEquality(I.asMatrix(), Imat);
+
+    auto X1 = X * I;
+    auto X2 = I * X;
+
+    MatrixEquality(X.asMatrix(), X1.asMatrix());
+    MatrixEquality(X.asMatrix(), X2.asMatrix());
+  }
+}
+
+TYPED_TEST(G3GroupsTest, TestInverse)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto X_inv = X.inv();
+    auto I = TypeParam();
+
+    auto I1 = X * X_inv;
+    auto I2 = X_inv * X;
+
+    MatrixEquality(I.asMatrix(), I1.asMatrix());
+    MatrixEquality(I.asMatrix(), I2.asMatrix());
+  }
+}
+
+TYPED_TEST(G3GroupsTest, TestGroupProduct)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z.asMatrix(), X.asMatrix() * Y.asMatrix());
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+    auto W = Y * X;
+
+    auto X1 = X;
+    auto X2 = X;
+
+    X1.multiplyRight(Y);
+
+    MatrixEquality(Z.asMatrix(), X1.asMatrix());
+
+    X2.multiplyLeft(Y);
+
+    MatrixEquality(W.asMatrix(), X2.asMatrix());
+  }
+}
 
 /**
  * @brief Tangent group specific tests
