@@ -94,6 +94,27 @@ class SO3
   [[nodiscard]] static const TMatrixType adjoint(const VectorType& u) { return wedge(u); }
 
   /**
+   * @brief SO3 J2 matrix
+   *
+   * @param u R3 vector
+   *
+   * @return SO3 J2 matrix
+   */
+  [[nodiscard]] static const TMatrixType J2(const VectorType& u)
+  {
+    FPType ang = u.norm();
+    if (ang < eps_)
+    {
+      return 0.5 * TMatrixType::Identity() - 1 / 6 * wedge(u);
+    }
+    VectorType ax = u / ang;
+    FPType ang_p2 = pow(ang, 2);
+    FPType s = (ang - sin(ang)) / ang_p2;
+    FPType c = (1 - cos(ang)) / ang_p2;
+    return c * TMatrixType::Identity() + s * wedge(ax) + (0.5 - c) * ax * ax.transpose();
+  }
+
+  /**
    * @brief SO3 left Jacobian matrix
    *
    * @param u R3 vector
