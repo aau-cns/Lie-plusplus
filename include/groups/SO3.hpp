@@ -212,11 +212,11 @@ class SO3
 
   /**
    * @brief Operator * overloading.
-   * Implements the SO3 composition with a so3 element this * other
+   * Implements the SO3 composition this * other with a SO3 group or alegra element in matrix form
    *
-   * @param other SO3 Lie algebra element in matrix form
+   * @param other SO3 group or algebra element in matrix form
    *
-   * @return SO3 group element in matrix form
+   * @return SO3 group or algebra element in matrix form
    *
    * @note usage: z = x * y
    */

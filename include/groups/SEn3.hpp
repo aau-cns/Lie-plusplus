@@ -260,21 +260,43 @@ class SEn3
 
   /**
    * @brief Operator * overloading.
-   * Implements the SEn3 composition with a se3 element this * other
+   * Implements the SEn3 composition this * other with a SEn3 group or alegra element in matrix form
    *
-   * @param other SE3 Lie algebra element in matrix form
+   * @param other SE3 group or algebra element in matrix form
    *
-   * @return SEn3 Lie algebra element in matrix form
+   * @return SEn3 group or algebra element in matrix form
    *
    * @note usage: z = x * y
    */
   [[nodiscard]] const MatrixType operator*(const MatrixType& other) const
   {
-    MatrixType res = MatrixType::Zero();
+    bool is_algebra = true;
+    bool is_group = true;
+
+    for (int i = 0; i < n; ++i)
+    {
+      is_algebra &= (other(3 + i, 3 + i) == 0);
+      is_group &= (other(3 + i, 3 + i) == 1);
+    }
+
+    if (!(is_algebra || is_group))
+    {
+      throw std::runtime_error(
+          "SEn3: operator* is defined only for composition with matrix form of SEn3 group or algebra elements");
+    }
+
+    MatrixType res = other;
     res.template block<3, 3>(0, 0) = C_.R() * other.template block<3, 3>(0, 0);
     for (int i = 0; i < n; ++i)
     {
-      res.template block<3, 1>(0, 3 + i) = C_.R() * other.template block<3, 1>(0, 3 + i);
+      if (is_algebra)
+      {
+        res.template block<3, 1>(0, 3 + i) = C_.R() * other.template block<3, 1>(0, 3 + i);
+      }
+      else
+      {
+        res.template block<3, 1>(0, 3 + i) = C_.R() * other.template block<3, 1>(0, 3 + i) + t_[i];
+      }
     }
     return res;
   }

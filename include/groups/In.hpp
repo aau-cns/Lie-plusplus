@@ -226,11 +226,11 @@ class In
 
   /**
    * @brief Operator * overloading.
-   * Implements the In composition with a Lie algebra of In element this * other
+   * Implements the In composition this * other with a In group or alegra element in matrix form
    *
-   * @param other In Lie algebra element in matrix form
+   * @param other In group or algebra element in matrix form
    *
-   * @return In Lie algebra element in matrix form
+   * @return In group or algebra element in matrix form
    */
   [[nodiscard]] const MatrixType operator*(const MatrixType& other) const { return K() * other; }
 
