@@ -210,11 +210,11 @@ class SOT3
 
   /**
    * @brief Operator * overloading.
-   * Implements the SOT3 composition with a sot3 element this * other
+   * Implements the SOT3 composition this * other with a SOT3 group or alegra element in matrix form
    *
-   * @param other SOT3 Lie algebra element in matrix form
+   * @param other SOT3 group or algebra element in matrix form
    *
-   * @return SOT3 Lie algebra element in matrix form
+   * @return SOT3 group or algebra element in matrix form
    *
    * @note usage: z = x * y
    */

@@ -665,6 +665,53 @@ TYPED_TEST(InGroupsTest, InAction)
   }
 }
 
+TYPED_TEST(InGroupsTest, TestGroupProduct)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z.asMatrix(), X.asMatrix() * Y.asMatrix());
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+    auto W = Y * X;
+
+    auto X1 = X;
+    auto X2 = X;
+
+    X1.multiplyRight(Y);
+
+    MatrixEquality(Z.asMatrix(), X1.asMatrix());
+
+    X2.multiplyLeft(Y);
+
+    MatrixEquality(W.asMatrix(), X2.asMatrix());
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random()).asMatrix();
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z, X.asMatrix() * Y);
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::wedge(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z, X.asMatrix() * Y);
+  }
+}
+
 /**
  * @brief SO3 specific tests
  */
@@ -724,6 +771,53 @@ TYPED_TEST(SO3GroupsTest, SO3Action)
     auto X = TypeParam(q);
     typename TypeParam::VectorType x = TypeParam::VectorType::Random();
     MatrixEquality(X * x, q.toRotationMatrix() * x);
+  }
+}
+
+TYPED_TEST(SO3GroupsTest, TestGroupProduct)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z.asMatrix(), X.asMatrix() * Y.asMatrix());
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+    auto W = Y * X;
+
+    auto X1 = X;
+    auto X2 = X;
+
+    X1.multiplyRight(Y);
+
+    MatrixEquality(Z.asMatrix(), X1.asMatrix());
+
+    X2.multiplyLeft(Y);
+
+    MatrixEquality(W.asMatrix(), X2.asMatrix());
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random()).asMatrix();
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z, X.asMatrix() * Y);
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::wedge(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z, X.asMatrix() * Y);
   }
 }
 
@@ -815,6 +909,53 @@ TYPED_TEST(SOT3GroupsTest, SOT3Action)
     auto X = TypeParam(q, s);
     typename TypeParam::SO3Type::VectorType x = TypeParam::SO3Type::VectorType::Random();
     MatrixEquality(X * x, s * q.toRotationMatrix() * x);
+  }
+}
+
+TYPED_TEST(SOT3GroupsTest, TestGroupProduct)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z.asMatrix(), X.asMatrix() * Y.asMatrix());
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+    auto W = Y * X;
+
+    auto X1 = X;
+    auto X2 = X;
+
+    X1.multiplyRight(Y);
+
+    MatrixEquality(Z.asMatrix(), X1.asMatrix());
+
+    X2.multiplyLeft(Y);
+
+    MatrixEquality(W.asMatrix(), X2.asMatrix());
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random()).asMatrix();
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z, X.asMatrix() * Y);
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::wedge(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z, X.asMatrix() * Y);
   }
 }
 
@@ -956,6 +1097,14 @@ TYPED_TEST(SEn3GroupsTest, TestGroupProduct)
     X2.multiplyLeft(Y);
 
     MatrixEquality(W.asMatrix(), X2.asMatrix());
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random()).asMatrix();
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z, X.asMatrix() * Y);
   }
   {
     auto X = TypeParam::exp(TypeParam::VectorType::Random());
