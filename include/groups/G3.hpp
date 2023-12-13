@@ -153,13 +153,17 @@ class G3
     typename SO3Type::VectorType p = u.template block<3, 1>(6, 0);
     Scalar s = u(9);
     FPType ang = w.norm();
+    if (ang < eps_)
+    {
+      return TMatrixType::Identity() + 0.5 * adjoint(u);
+    }
     typename SO3Type::MatrixType SO3JL = SO3Type::leftJacobian(w);
     TMatrixType J = TMatrixType::Identity();
     J.template block<3, 3>(0, 0) = SO3JL;
-    J.template block<3, 3>(3, 0) = SE3leftJacobianQ(w, v);
+    J.template block<3, 3>(3, 0) = G3leftJacobianQ1(w, v);
     J.template block<3, 3>(3, 3) = SO3JL;
-    J.template block<3, 3>(6, 0) = SE3leftJacobianQ(w, p) - s * G3leftJacobianQ2(w, v);
-    J.template block<3, 3>(6, 3) = -s * SO3Type::MatrixType::Identity();
+    J.template block<3, 3>(6, 0) = G3leftJacobianQ1(w, p) - s * G3leftJacobianQ2(w, v);
+    J.template block<3, 3>(6, 3) = -s * G3leftJacobianU1(w);
     J.template block<3, 3>(6, 6) = SO3JL;
     J.template block<3, 1>(6, 9) = SO3Type::Gamma2(w) * v;
     return J;
@@ -256,21 +260,38 @@ class G3
 
   /**
    * @brief Operator * overloading.
-   * Implements the G3 composition with a g3 element this * other
+   * Implements the G3 composition this * other with a G3 group or alegra element in matrix form
    *
-   * @param other G3 Lie algebra element in matrix form
+   * @param other G3 group or algebra element in matrix form
    *
-   * @return G3 Lie algebra element in matrix form
+   * @return G3 group or algebra element in matrix form
    *
    * @note usage: z = x * y
    */
   [[nodiscard]] const MatrixType operator*(const MatrixType& other) const
   {
-    MatrixType res = MatrixType::Zero();
+    bool is_algebra = ((other(3, 3) == 0) && (other(4, 4) == 0));
+    bool is_group = ((other(3, 3) == 1) && (other(4, 4) == 1));
+
+    if (!(is_algebra || is_group))
+    {
+      throw std::runtime_error(
+          "G3: operator* is defined only for composition with matrix form of G3 group or algebra elements");
+    }
+
+    MatrixType res = other;
     res.template block<3, 3>(0, 0) = C_.R() * other.template block<3, 3>(0, 0);
-    res.template block<3, 1>(0, 3) = C_.R() * other.template block<3, 1>(0, 3) + t_[0];
-    res.template block<3, 1>(0, 4) = C_.R() * other.template block<3, 1>(0, 4) + t_[0] * other(3, 4) + t_[1];
-    res(3, 4) = other(3, 4) + s_;
+    if (is_algebra)
+    {
+      res.template block<3, 1>(0, 3) = C_.R() * other.template block<3, 1>(0, 3);
+      res.template block<3, 1>(0, 4) = C_.R() * other.template block<3, 1>(0, 4) + t_[0] * other(3, 4);
+    }
+    else
+    {
+      res.template block<3, 1>(0, 3) = C_.R() * other.template block<3, 1>(0, 3) + t_[0];
+      res.template block<3, 1>(0, 4) = C_.R() * other.template block<3, 1>(0, 4) + t_[0] * other(3, 4) + t_[1];
+      res(3, 4) += s_;
+    }
     return res;
   }
 
@@ -283,10 +304,10 @@ class G3
    */
   const G3& multiplyRight(const G3& other)
   {
-    C_.multiplyRight(other.C_);
-    t_[0] = (C_.R() * other.t_[0] + t_[0]).eval();
     t_[1] = (C_.R() * other.t_[1] + t_[0] * other.s_ + t_[1]).eval();
+    t_[0] = (C_.R() * other.t_[0] + t_[0]).eval();
     s_ += other.s_;
+    C_.multiplyRight(other.C_);
     return *this;
   }
 
@@ -299,10 +320,10 @@ class G3
    */
   const G3& multiplyLeft(const G3& other)
   {
-    C_.multiplyLeft(other.C_);
-    t_[0] = (other.C_.R() * t_[0] + other.t_[0]).eval();
     t_[1] = (other.C_.R() * t_[1] + other.t_[0] * s_ + other.t_[1]).eval();
+    t_[0] = (other.C_.R() * t_[0] + other.t_[0]).eval();
     s_ += other.s_;
+    C_.multiplyLeft(other.C_);
     return *this;
   }
 
@@ -427,6 +448,40 @@ class G3
 
  protected:
   /**
+   * @brief G3 left Jacobian Q1 matrix
+   *
+   * @param w R3 vector
+   * @param v R3 vector
+   *
+   * @return G3 left Jacobian Q1 matrix
+   */
+  [[nodiscard]] static const typename SO3Type::MatrixType G3leftJacobianQ1(const typename SO3Type::VectorType& w,
+                                                                           const typename SO3Type::VectorType& v)
+  {
+    typename SO3Type::MatrixType p = SO3Type::wedge(w);
+    typename SO3Type::MatrixType r = SO3Type::wedge(v);
+
+    FPType ang = w.norm();
+    FPType s = sin(ang);
+    FPType c = cos(ang);
+
+    FPType ang_p2 = pow(ang, 2);
+    FPType ang_p3 = ang_p2 * ang;
+    FPType ang_p4 = ang_p3 * ang;
+    FPType ang_p5 = ang_p4 * ang;
+
+    FPType c1 = (ang - s) / ang_p3;
+    FPType c2 = (0.5 * ang_p2 + c - 1.0) / ang_p4;
+    FPType c3 = (ang * (1.0 + 0.5 * c) - 1.5 * s) / ang_p5;
+
+    typename SO3Type::MatrixType m1 = p * r + r * p + p * r * p;
+    typename SO3Type::MatrixType m2 = p * p * r + r * p * p - 3.0 * p * r * p;
+    typename SO3Type::MatrixType m3 = p * r * p * p + p * p * r * p;
+
+    return 0.5 * r + c1 * m1 + c2 * m2 + c3 * m3;
+  }
+
+  /**
    * @brief G3 left Jacobian Q2 matrix
    *
    * @param w R3 vector
@@ -451,14 +506,15 @@ class G3
     FPType ang_p6 = ang_p5 * ang;
     FPType ang_p7 = ang_p6 * ang;
 
+    FPType c0 = 1 / 6;
     FPType c1 = (0.5 * ang_p2 + c - 1.0) / ang_p4;
-    FPType c2 = (c1 * ang_p3 - ang + s) / ang_p5;
+    FPType c2 = (c0 * ang_p3 - ang + s) / ang_p5;
     FPType c3 = -(2.0 * c + ang * s - 2.0) / ang_p4;
-    FPType c4 = (c1 * ang_p3 + ang * c + ang - 2.0 * s) / ang_p5;
+    FPType c4 = (c0 * ang_p3 + ang * c + ang - 2.0 * s) / ang_p5;
     FPType c5 = -(0.75 * ang * c + (0.25 * ang_p2 - 0.75) * s) / ang_p5;
     FPType c6 = (0.25 * ang * c + 0.5 * ang - 0.75 * s) / ang_p5;
     FPType c7 = ((0.25 * ang_p2 - 2.0) * c - 1.25 * ang * s + 2.0) / ang_p6;
-    FPType c8 = (c1 * ang_p3 + 1.25 * ang * c + (0.25 * ang_p2 - 1.25) * s) / ang_p7;
+    FPType c8 = (c0 * ang_p3 + 1.25 * ang * c + (0.25 * ang_p2 - 1.25) * s) / ang_p7;
 
     typename SO3Type::MatrixType m1 = r * p;
     typename SO3Type::MatrixType m2 = r * p * p;
@@ -469,7 +525,7 @@ class G3
     typename SO3Type::MatrixType m7 = p * r * p * p;
     typename SO3Type::MatrixType m8 = p * p * r * p * p;
 
-    return 1 / 6 * r + c1 * m1 + c2 * m2 + c3 * m3 + c4 * m4 + c5 * m5 + c6 * m6 + c7 * m7 + c8 * m8;
+    return c0 * r + c1 * m1 + c2 * m2 + c3 * m3 + c4 * m4 + c5 * m5 + c6 * m6 + c7 * m7 + c8 * m8;
   }
 
   /**
@@ -484,7 +540,7 @@ class G3
     FPType ang = u.norm();
     if (ang < eps_)
     {
-      return 0.5 * SO3Type::MatrixType::Identity() + 1 / 3 * wedge(u);
+      return 0.5 * SO3Type::MatrixType::Identity() + 1 / 3 * SO3Type::wedge(u);
     }
     typename SO3Type::VectorType ax = u / ang;
     FPType ang_p2 = pow(ang, 2);
@@ -492,7 +548,7 @@ class G3
     FPType c = cos(ang);
     FPType c1 = (ang * s + c - 1) / ang_p2;
     FPType c2 = (s - ang * c) / ang_p2;
-    return c1 * SO3Type::MatrixType::Identity() + c2 * wedge(ax) + (0.5 - c1) * ax * ax.transpose();
+    return c1 * SO3Type::MatrixType::Identity() + c2 * SO3Type::wedge(ax) + (0.5 - c1) * ax * ax.transpose();
   }
 
   SO3Type C_;         //!< The SE23 element of the symmetry group ancting on the extended pose
