@@ -21,6 +21,7 @@
 #include "groups/SDB.hpp"
 #include "groups/SOT3.hpp"
 #include "groups/TG.hpp"
+#include "groups/G3.hpp"
 
 #include "utils/tools.hpp"
 
@@ -35,6 +36,285 @@ typedef testing::Types<SE3d, SE3f, SE23f, SE23d> SEn3Groups;
 typedef testing::Types<SDBf, SDBd> SDBGroups;
 typedef testing::Types<TGf, TGd> TGGroups;
 typedef testing::Types<Inf, Ind> INGroups;
+typedef testing::Types<G3f, G3d> G3Groups;
+
+/**
+ * @brief Inhomogeneous Galileian group specific tests
+ */
+template <typename T>
+class G3GroupsTest : public testing::Test
+{
+};
+TYPED_TEST_SUITE(G3GroupsTest, G3Groups);
+
+TYPED_TEST(G3GroupsTest, G3Constructors)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    {
+      auto X = TypeParam();
+      MatrixEquality(X.asMatrix(), TypeParam::MatrixType::Identity());
+      MatrixEquality(X.R(), TypeParam::SO3Type::MatrixType::Identity());
+      QuaternionEquality(X.q(), TypeParam::SO3Type::QuaternionType::Identity());
+      for (const auto& it : X.t())
+      {
+        MatrixEquality(it, TypeParam::SO3Type::VectorType::Zero());
+      }
+      MatrixEquality(X.v(), TypeParam::SO3Type::VectorType::Zero());
+      MatrixEquality(X.p(), TypeParam::SO3Type::VectorType::Zero());
+      ScalarEquality(X.s(), 0.0);
+    }
+    auto q = TypeParam::SO3Type::QuaternionType::UnitRandom();
+    typename TypeParam::IsometriesType t;
+    typename TypeParam::Scalar s = utils::random<typename TypeParam::Scalar>(0.0, 1.0);
+    typename TypeParam::MatrixType M = TypeParam::MatrixType::Identity();
+    M.template block<3, 3>(0, 0) = q.toRotationMatrix();
+    t[0] = TypeParam::SO3Type::VectorType::Random();
+    M.template block<3, 1>(0, 3) = t[0];
+    t[1] = TypeParam::SO3Type::VectorType::Random();
+    M.template block<3, 1>(0, 4) = t[1];
+    M(3, 4) = s;
+    {
+      auto X = TypeParam(q, t, s);
+      MatrixEquality(X.asMatrix(), M);
+      MatrixEquality(X.R(), q.toRotationMatrix());
+      QuaternionEquality(X.q(), q);
+      MatrixEquality(X.t()[0], t[0]);
+      MatrixEquality(X.t()[1], t[1]);
+      MatrixEquality(X.v(), t[0]);
+      MatrixEquality(X.p(), t[1]);
+      ScalarEquality(X.s(), s);
+    }
+    {
+      auto X = TypeParam(q.toRotationMatrix(), t, s);
+      MatrixEquality(X.asMatrix(), M);
+      MatrixEquality(X.R(), q.toRotationMatrix());
+      QuaternionEquality(X.q(), q);
+      MatrixEquality(X.t()[0], t[0]);
+      MatrixEquality(X.t()[1], t[1]);
+      MatrixEquality(X.v(), t[0]);
+      MatrixEquality(X.p(), t[1]);
+      ScalarEquality(X.s(), s);
+    }
+    {
+      auto X = TypeParam(typename TypeParam::SO3Type(q), t, s);
+      MatrixEquality(X.asMatrix(), M);
+      MatrixEquality(X.R(), q.toRotationMatrix());
+      QuaternionEquality(X.q(), q);
+      MatrixEquality(X.t()[0], t[0]);
+      MatrixEquality(X.t()[1], t[1]);
+      MatrixEquality(X.v(), t[0]);
+      MatrixEquality(X.p(), t[1]);
+      ScalarEquality(X.s(), s);
+    }
+    {
+      auto X = TypeParam(M);
+      MatrixEquality(X.asMatrix(), M);
+      MatrixEquality(X.R(), q.toRotationMatrix());
+      QuaternionEquality(X.q(), q);
+      MatrixEquality(X.t()[0], t[0]);
+      MatrixEquality(X.t()[1], t[1]);
+      MatrixEquality(X.v(), t[0]);
+      MatrixEquality(X.p(), t[1]);
+      ScalarEquality(X.s(), s);
+      auto Y = X;
+      MatrixEquality(X.asMatrix(), Y.asMatrix());
+      MatrixEquality(X.R(), Y.R());
+      QuaternionEquality(X.q(), Y.q());
+      MatrixEquality(X.t()[0], Y.t()[0]);
+      MatrixEquality(X.t()[1], Y.t()[1]);
+      MatrixEquality(X.v(), Y.v());
+      MatrixEquality(X.p(), Y.p());
+      ScalarEquality(X.s(), Y.s());
+    }
+  }
+}
+
+TYPED_TEST(G3GroupsTest, G3Setters)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    auto X = TypeParam();
+    auto q = TypeParam::SO3Type::QuaternionType::UnitRandom();
+    typename TypeParam::IsometriesType t;
+    typename TypeParam::Scalar s = utils::random<typename TypeParam::Scalar>(0.0, 1.0);
+    typename TypeParam::MatrixType M = TypeParam::MatrixType::Identity();
+    M.template block<3, 3>(0, 0) = q.toRotationMatrix();
+    t[0] = TypeParam::SO3Type::VectorType::Random();
+    M.template block<3, 1>(0, 3) = t[0];
+    t[1] = TypeParam::SO3Type::VectorType::Random();
+    M.template block<3, 1>(0, 4) = t[1];
+    M(3, 4) = s;
+    X.fromMatrix(M);
+    MatrixEquality(X.asMatrix(), M);
+    MatrixEquality(X.R(), q.toRotationMatrix());
+    QuaternionEquality(X.q(), q);
+    MatrixEquality(X.t()[0], t[0]);
+    MatrixEquality(X.t()[1], t[1]);
+    MatrixEquality(X.v(), t[0]);
+    MatrixEquality(X.p(), t[1]);
+    ScalarEquality(X.s(), s);
+  }
+}
+
+TYPED_TEST(G3GroupsTest, TestExpLog)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    typename TypeParam::VectorType x = TypeParam::VectorType::Zero();
+    typename TypeParam::VectorType y = TypeParam::log(TypeParam::exp(x));
+    MatrixEquality(x, y);
+
+    x = 1e-12 * TypeParam::VectorType::Random();
+    y = TypeParam::log(TypeParam::exp(x));
+    MatrixEquality(x, y);
+
+    x = TypeParam::VectorType::Random();
+    y = TypeParam::log(TypeParam::exp(x));
+    MatrixEquality(x, y);
+  }
+}
+
+TYPED_TEST(G3GroupsTest, TestAdjoint)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    typename TypeParam::VectorType x = TypeParam::VectorType::Zero();
+    auto AdEx = TypeParam::exp(x).Adjoint();
+    auto adx = TypeParam::adjoint(x);
+    MatrixEquality(AdEx, adx.exp());
+
+    x = 1e-12 * TypeParam::VectorType::Random();
+    AdEx = TypeParam::exp(x).Adjoint();
+    adx = TypeParam::adjoint(x);
+    MatrixEquality(AdEx, adx.exp());
+
+    x = TypeParam::VectorType::Random();
+    AdEx = TypeParam::exp(x).Adjoint();
+    adx = TypeParam::adjoint(x);
+    MatrixEquality(AdEx, adx.exp());
+  }
+}
+
+TYPED_TEST(G3GroupsTest, TestLeftJacobian)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    typename TypeParam::VectorType x = TypeParam::VectorType::Zero();
+    auto AdEx = TypeParam::exp(x).Adjoint();
+    auto adx = TypeParam::adjoint(x);
+    auto Jlx = TypeParam::leftJacobian(x);
+    MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
+
+    x = 1e-12 * TypeParam::VectorType::Random();
+    AdEx = TypeParam::exp(x).Adjoint();
+    adx = TypeParam::adjoint(x);
+    Jlx = TypeParam::leftJacobian(x);
+    MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
+
+    x = TypeParam::VectorType::Random();
+    AdEx = TypeParam::exp(x).Adjoint();
+    adx = TypeParam::adjoint(x);
+    Jlx = TypeParam::leftJacobian(x);
+    MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
+  }
+}
+
+TYPED_TEST(G3GroupsTest, TestAssociativity)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    auto X1 = TypeParam::exp(TypeParam::VectorType::Random());
+    auto X2 = TypeParam::exp(TypeParam::VectorType::Random());
+    auto X3 = TypeParam::exp(TypeParam::VectorType::Random());
+
+    auto Z1 = (X1 * X2) * X3;
+    auto Z2 = X1 * (X2 * X3);
+
+    MatrixEquality(Z1.asMatrix(), Z2.asMatrix());
+  }
+}
+
+TYPED_TEST(G3GroupsTest, TestIdentity)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto I = TypeParam();
+    typename TypeParam::MatrixType Imat = TypeParam::MatrixType::Identity();
+
+    MatrixEquality(I.asMatrix(), Imat);
+
+    auto X1 = X * I;
+    auto X2 = I * X;
+
+    MatrixEquality(X.asMatrix(), X1.asMatrix());
+    MatrixEquality(X.asMatrix(), X2.asMatrix());
+  }
+}
+
+TYPED_TEST(G3GroupsTest, TestInverse)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto X_inv = X.inv();
+    auto I = TypeParam();
+
+    auto I1 = X * X_inv;
+    auto I2 = X_inv * X;
+
+    MatrixEquality(I.asMatrix(), I1.asMatrix());
+    MatrixEquality(I.asMatrix(), I2.asMatrix());
+  }
+}
+
+TYPED_TEST(G3GroupsTest, TestGroupProduct)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z.asMatrix(), X.asMatrix() * Y.asMatrix());
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+    auto W = Y * X;
+
+    auto X1 = X;
+    auto X2 = X;
+
+    X1.multiplyRight(Y);
+
+    MatrixEquality(Z.asMatrix(), X1.asMatrix());
+
+    X2.multiplyLeft(Y);
+
+    MatrixEquality(W.asMatrix(), X2.asMatrix());
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::exp(TypeParam::VectorType::Random()).asMatrix();
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z, X.asMatrix() * Y);
+  }
+  {
+    auto X = TypeParam::exp(TypeParam::VectorType::Random());
+    auto Y = TypeParam::wedge(TypeParam::VectorType::Random());
+
+    auto Z = X * Y;
+
+    MatrixEquality(Z, X.asMatrix() * Y);
+  }
+}
 
 /**
  * @brief Tangent group specific tests
@@ -833,6 +1113,69 @@ TYPED_TEST(SEn3GroupsTest, TestGroupProduct)
     auto Z = X * Y;
 
     MatrixEquality(Z, X.asMatrix() * Y);
+  }
+}
+
+TYPED_TEST(SEn3GroupsTest, TestExpLog)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    typename TypeParam::VectorType x = TypeParam::VectorType::Zero();
+    typename TypeParam::VectorType y = TypeParam::log(TypeParam::exp(x));
+    MatrixEquality(x, y);
+
+    x = 1e-12 * TypeParam::VectorType::Random();
+    y = TypeParam::log(TypeParam::exp(x));
+    MatrixEquality(x, y);
+
+    x = TypeParam::VectorType::Random();
+    y = TypeParam::log(TypeParam::exp(x));
+    MatrixEquality(x, y);
+  }
+}
+
+TYPED_TEST(SEn3GroupsTest, TestAdjoint)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    typename TypeParam::VectorType x = TypeParam::VectorType::Zero();
+    auto AdEx = TypeParam::exp(x).Adjoint();
+    auto adx = TypeParam::adjoint(x);
+    MatrixEquality(AdEx, adx.exp());
+
+    x = 1e-12 * TypeParam::VectorType::Random();
+    AdEx = TypeParam::exp(x).Adjoint();
+    adx = TypeParam::adjoint(x);
+    MatrixEquality(AdEx, adx.exp());
+
+    x = TypeParam::VectorType::Random();
+    AdEx = TypeParam::exp(x).Adjoint();
+    adx = TypeParam::adjoint(x);
+    MatrixEquality(AdEx, adx.exp());
+  }
+}
+
+TYPED_TEST(SEn3GroupsTest, TestLeftJacobian)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    typename TypeParam::VectorType x = TypeParam::VectorType::Zero();
+    auto AdEx = TypeParam::exp(x).Adjoint();
+    auto adx = TypeParam::adjoint(x);
+    auto Jlx = TypeParam::leftJacobian(x);
+    MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
+
+    x = 1e-12 * TypeParam::VectorType::Random();
+    AdEx = TypeParam::exp(x).Adjoint();
+    adx = TypeParam::adjoint(x);
+    Jlx = TypeParam::leftJacobian(x);
+    MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
+
+    x = TypeParam::VectorType::Random();
+    AdEx = TypeParam::exp(x).Adjoint();
+    adx = TypeParam::adjoint(x);
+    Jlx = TypeParam::leftJacobian(x);
+    MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
   }
 }
 
