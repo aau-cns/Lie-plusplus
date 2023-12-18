@@ -730,7 +730,7 @@ TYPED_TEST(SO3GroupsTest, SO3Constructors)
       MatrixEquality(X.R(), TypeParam::MatrixType::Identity());
       QuaternionEquality(X.q(), TypeParam::QuaternionType::Identity());
     }
-    auto q = TypeParam::QuaternionType::UnitRandom();
+    typename TypeParam::QuaternionType q = TypeParam::QuaternionType::UnitRandom();
     {
       auto X = TypeParam(q);
       MatrixEquality(X.R(), q.toRotationMatrix());
@@ -743,6 +743,36 @@ TYPED_TEST(SO3GroupsTest, SO3Constructors)
       auto Y = X;
       MatrixEquality(X.R(), Y.R());
       QuaternionEquality(X.q(), Y.q());
+    }
+    {
+      typename TypeParam::VectorType u = TypeParam::VectorType::Random();
+
+      typename TypeParam::VectorType axis = u.cross(TypeParam::VectorType::Random());
+      axis /= axis.norm();
+
+      fp ang = utils::random<fp>(0.0, M_PI);
+
+      q = TypeParam::exp(ang * axis).q();
+
+      typename TypeParam::VectorType v = q.toRotationMatrix() * u;
+      auto X = TypeParam(u, v);
+
+      MatrixEquality(X * u, v, 1.0e-3);
+    }
+    {
+      typename TypeParam::VectorType u = TypeParam::VectorType::Random();
+
+      if (i % 2 == 0)
+      {
+        auto X = TypeParam(u, -u);
+        MatrixEquality(X.R() * u, -u, 1.0e-3);
+      }
+      else
+      {
+        auto X = TypeParam(u, TypeParam::VectorType::Zero());
+        MatrixEquality(X.R(), TypeParam::MatrixType::Identity());
+        QuaternionEquality(X.q(), TypeParam::QuaternionType::Identity());
+      }
     }
   }
 }
@@ -841,7 +871,7 @@ TYPED_TEST(SOT3GroupsTest, SOT3Constructors)
       QuaternionEquality(X.q(), TypeParam::SO3Type::QuaternionType::Identity());
       ScalarEquality(X.s(), 1.0);
     }
-    auto q = TypeParam::SO3Type::QuaternionType::UnitRandom();
+    typename TypeParam::SO3Type::QuaternionType q = TypeParam::SO3Type::QuaternionType::UnitRandom();
     fp s = utils::random<fp>(0.1, 10);
     typename TypeParam::MatrixType Q = TypeParam::MatrixType::Identity();
     Q.template block<3, 3>(0, 0) = q.toRotationMatrix();
@@ -878,6 +908,37 @@ TYPED_TEST(SOT3GroupsTest, SOT3Constructors)
       MatrixEquality(X.R(), Y.R());
       QuaternionEquality(X.q(), Y.q());
       ScalarEquality(X.s(), X.s());
+    }
+    {
+      typename TypeParam::SO3Type::VectorType u = TypeParam::SO3Type::VectorType::Random();
+
+      typename TypeParam::SO3Type::VectorType axis = u.cross(TypeParam::SO3Type::VectorType::Random());
+      axis /= axis.norm();
+
+      fp ang = utils::random<fp>(0.0, M_PI);
+
+      q = TypeParam::SO3Type::exp(ang * axis).q();
+      Q.template block<3, 3>(0, 0) = q.toRotationMatrix();
+
+      typename TypeParam::SO3Type::VectorType v = s * (q.toRotationMatrix() * u);
+      auto X = TypeParam(u, v);
+
+      MatrixEquality(X.s() * X.R() * u, v, 1.0e-3);
+    }
+    {
+      typename TypeParam::SO3Type::VectorType u = TypeParam::SO3Type::VectorType::Random();
+
+      if (i % 2 == 0)
+      {
+        auto X = TypeParam(u, -u);
+        MatrixEquality(X * u, -u, 1.0e-3);
+      }
+      else
+      {
+        auto X = TypeParam(u, TypeParam::SO3Type::VectorType::Zero());
+        MatrixEquality(X.R(), TypeParam::SO3Type::MatrixType::Identity());
+        QuaternionEquality(X.q(), TypeParam::SO3Type::QuaternionType::Identity());
+      }
     }
   }
 }

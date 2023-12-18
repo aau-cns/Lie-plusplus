@@ -37,6 +37,7 @@ class SO3
   using TMatrixType = Eigen::Matrix<FPType, 3, 3>;   //!< Transformation matrix type (Linear operator on R3)
   using VectorType = Eigen::Matrix<FPType, 3, 1>;    //!< R3 Vectorspace element type (isomorphic to Lie Algebra so3)
   using QuaternionType = Eigen::Quaternion<FPType>;  //!< Quaternion type
+  using AngleAxisType = Eigen::AngleAxis<FPType>;    //!< Angle-axis type
 
   /**
    * @brief Construct an identity SO3 object
@@ -56,6 +57,44 @@ class SO3
    * @param R Rotation matrix
    */
   SO3(const MatrixType& R) : R_(R), q_(R) { checkq(); }
+
+  /**
+   * @brief Construct a SO3 object from two vector such that Ru = v
+   *
+   * @param u Vector in R3
+   * @param v vector in R3
+   */
+  SO3(const VectorType& u, const VectorType& v) : R_(), q_()
+  {
+    VectorType un = u.normalized();
+    VectorType vn = v.normalized();
+
+    VectorType ax = un.cross(vn);
+    FPType s = ax.norm();
+    FPType c = un.dot(vn);
+
+    if (std::abs(1 + c) < eps_)
+    {
+      ax = un.cross(VectorType::Random());
+      ax.normalize();
+      q_ = QuaternionType(0.0, ax(0), ax(1), ax(2));
+      R_ = q_.toRotationMatrix();
+    }
+    else if (std::abs(1 - c) < eps_ || s == c)
+    {
+      q_ = QuaternionType::Identity();
+      R_ = MatrixType::Identity();
+    }
+    else
+    {
+      // q_ = QuaternionType::FromTwoVectors(u, v);
+      // R_ = q_.toRotationMatrix();
+      R_ = MatrixType::Identity() + wedge(ax) + ((1.0 - c) / (s * s)) * (wedge(ax) * wedge(ax));
+      q_ = QuaternionType(R_);
+    }
+
+    checkq();
+  }
 
   /**
    * @brief wedge operator, transform a vector in R3 to a matrix in so3

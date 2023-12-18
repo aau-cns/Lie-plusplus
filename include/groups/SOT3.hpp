@@ -74,6 +74,21 @@ class SOT3
   SOT3(const MatrixType& Q) : C_(Q.template block<3, 3>(0, 0)), s_(Q(3, 3)) { checkScale(); }
 
   /**
+   * @brief Construct a SOT3 object from two vector such that Ru = v
+   *
+   * @param u Vector in R3
+   * @param v vector in R3
+   */
+  SOT3(const typename SO3Type::VectorType& u, const typename SO3Type::VectorType& v) : C_(u, v), s_(1.0)
+  {
+    if (u.norm() > eps_ && v.norm() > eps_)
+    {
+      s_ = v.norm() / u.norm();
+    }
+    checkScale();
+  }
+
+  /**
    * @brief wedge operator, transform a vector in R4 to a matrix in sot3
    *
    * @param u R4 vector
