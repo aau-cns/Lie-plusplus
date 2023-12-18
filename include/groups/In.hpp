@@ -287,7 +287,7 @@ class In
   FPType cx_;  //!< The x-direction center
   FPType cy_;  //!< The y-direction center
 
-  static constexpr FPType eps_ = 1e-6;  //!< Epsilon
+  static constexpr FPType eps_ = std::is_same_v<FPType, float> ? 1.0e-6 : 1.0e-9;  //!< Epsilon
 };
 
 using Inf = In<float>;   //!< The Intrinsic group with single precision floating point

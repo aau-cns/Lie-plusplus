@@ -555,7 +555,7 @@ class G3
   IsometriesType t_;  //!< The translation vectors (isometries) of the G3 element
   Scalar s_;          //!< Scalar factor of the G3 group
 
-  static constexpr FPType eps_ = 1e-6;  //!< Epsilon
+  static constexpr FPType eps_ = std::is_same_v<FPType, float> ? 1.0e-6 : 1.0e-9;  //!< Epsilon
 };
 
 using G3d = G3<double>;  //!< The G3 group with double precision floating point

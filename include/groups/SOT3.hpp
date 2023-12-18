@@ -379,7 +379,7 @@ class SOT3
   SO3Type C_;    //!< SO3 object the rotational component of SOT3
   ScaleType s_;  //!< Scale factor
 
-  static constexpr FPType eps_ = 1e-6;  //!< Epsilon
+  static constexpr FPType eps_ = std::is_same_v<FPType, float> ? 1.0e-6 : 1.0e-9;  //!< Epsilon
 };
 
 using SOT3d = SOT3<double>;  //!< The SOT3 group with double precision floating point

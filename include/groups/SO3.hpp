@@ -73,22 +73,20 @@ class SO3
     FPType s = ax.norm();
     FPType c = un.dot(vn);
 
-    if (std::abs(1 + c) < eps_)
+    if (s == 0)
+    {
+      q_ = QuaternionType::Identity();
+      R_ = MatrixType::Identity();
+    }
+    else if (std::abs(1 + c) < eps_)
     {
       ax = un.cross(VectorType::Random());
       ax.normalize();
       q_ = QuaternionType(0.0, ax(0), ax(1), ax(2));
       R_ = q_.toRotationMatrix();
     }
-    else if (std::abs(1 - c) < eps_ || s == c)
-    {
-      q_ = QuaternionType::Identity();
-      R_ = MatrixType::Identity();
-    }
     else
     {
-      // q_ = QuaternionType::FromTwoVectors(u, v);
-      // R_ = q_.toRotationMatrix();
       R_ = MatrixType::Identity() + wedge(ax) + ((1.0 - c) / (s * s)) * (wedge(ax) * wedge(ax));
       q_ = QuaternionType(R_);
     }
@@ -407,7 +405,7 @@ class SO3
   MatrixType R_;      //!< Rotation matrix
   QuaternionType q_;  //!< Normalized quaternion
 
-  static constexpr FPType eps_ = 1e-6;  //!< Epsilon
+  static constexpr FPType eps_ = std::is_same_v<FPType, float> ? 1.0e-6 : 1.0e-9;  //!< Epsilon
 };
 
 using SO3d = SO3<double>;  //!< The SO3 group with double precision floating point
