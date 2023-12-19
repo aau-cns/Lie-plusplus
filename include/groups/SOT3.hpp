@@ -370,7 +370,7 @@ class SOT3
    */
   void checkScale()
   {
-    if (s_ < eps_)
+    if (s_ < 0)
     {
       throw std::invalid_argument("SOT3: Scale has to be grater than zero!");
     }
