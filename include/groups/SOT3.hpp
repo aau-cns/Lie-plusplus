@@ -147,6 +147,20 @@ class SOT3
   }
 
   /**
+   * @brief SOT3 inverse left Jacobian matrix
+   *
+   * @param u R4 vector
+   *
+   * @return SOT3 inverse left Jacobian matrix
+   */
+  [[nodiscard]] static const TMatrixType invLeftJacobian(const VectorType& u)
+  {
+    TMatrixType J = TMatrixType::Identity();
+    J.template block<3, 3>(0, 0) = SO3Type::invLeftJacobian(u.template block<3, 1>(0, 0));
+    return J;
+  }
+
+  /**
    * @brief SOT3 right Jacobian matrix
    *
    * @param u R4 vector
@@ -154,6 +168,15 @@ class SOT3
    * @return SOT3 right Jacobian matrix
    */
   [[nodiscard]] static const TMatrixType rightJacobian(const VectorType& u) { return leftJacobian(-u); }
+
+  /**
+   * @brief SOT3 inverse right Jacobian matrix
+   *
+   * @param u R4 vector
+   *
+   * @return SOT3 inverse right Jacobian matrix
+   */
+  [[nodiscard]] static const TMatrixType invRightJacobian(const VectorType& u) { return invLeftJacobian(-u); }
 
   /**
    * @brief The exponential map for SOT3.

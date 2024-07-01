@@ -172,6 +172,27 @@ class SO3
   }
 
   /**
+   * @brief SO3 inverse left Jacobian matrix
+   *
+   * @param u R3 vector
+   *
+   * @return SO3 inverse left Jacobian matrix
+   */
+  [[nodiscard]] static const TMatrixType invLeftJacobian(const VectorType& u)
+  {
+    FPType ang = u.norm();
+    if (ang < eps_)
+    {
+      return TMatrixType::Identity() - 0.5 * wedge(u);
+    }
+    VectorType ax = u / ang;
+    FPType half_ang = 0.5 * ang;
+    FPType cot = 1.0 / tan(half_ang);
+    return (half_ang * cot) * TMatrixType::Identity() + (1.0 - half_ang * cot) * ax * ax.transpose() -
+           half_ang * wedge(ax);
+  }
+
+  /**
    * @brief SO3 right Jacobian matrix
    *
    * @param u R3 vector
@@ -179,6 +200,15 @@ class SO3
    * @return SO3 right Jacobian matrix
    */
   [[nodiscard]] static const TMatrixType rightJacobian(const VectorType& u) { return leftJacobian(-u); }
+
+  /**
+   * @brief SO3 inverse right Jacobian matrix
+   *
+   * @param u R3 vector
+   *
+   * @return SO3 inverse right Jacobian matrix
+   */
+  [[nodiscard]] static const TMatrixType invRightJacobian(const VectorType& u) { return invLeftJacobian(-u); }
 
   /**
    * @brief The exponential map for SO3.

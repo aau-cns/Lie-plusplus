@@ -78,7 +78,7 @@ class Tangent
   {
     VectorType u = VectorType::Zero();
     u.template block<N, 1>(0, 0) = Group::log(X.G_);
-    u.template block<N, 1>(N, 0) = (Group::leftJacobian(u.template block<N, 1>(0, 0))).inverse() * X.g_;
+    u.template block<N, 1>(N, 0) = (Group::invLeftJacobian(u.template block<N, 1>(0, 0))) * X.g_;
     return u;
   }
 
