@@ -170,6 +170,33 @@ class SEn3
   }
 
   /**
+   * @brief SEn3 inverse left Jacobian matrix
+   *
+   * @param u R(3+3n) vector
+   *
+   * @return SEn3 inverse left Jacobian matrix
+   */
+  [[nodiscard]] static const TMatrixType invLeftJacobian(const VectorType& u)
+  {
+    typename SO3Type::VectorType w = u.template block<3, 1>(0, 0);
+    FPType ang = w.norm();
+    if (ang < eps_)
+    {
+      return TMatrixType::Identity() - 0.5 * adjoint(u);
+    }
+    typename SO3Type::MatrixType invSO3JL = SO3Type::invLeftJacobian(w);
+    TMatrixType J = TMatrixType::Identity();
+    J.template block<3, 3>(0, 0) = invSO3JL;
+    for (int i = 0; i < n; ++i)
+    {
+      typename SO3Type::VectorType x = u.template block<3, 1>(3 + 3 * i, 0);
+      J.template block<3, 3>(3 + 3 * i, 0) = -invSO3JL * SE3leftJacobianQ(w, x) * invSO3JL;
+      J.template block<3, 3>(3 + 3 * i, 3 + 3 * i) = invSO3JL;
+    }
+    return J;
+  }
+
+  /**
    * @brief SEn3 right Jacobian matrix
    *
    * @param u R(3+3n) vector
@@ -177,6 +204,15 @@ class SEn3
    * @return SEn3 right Jacobian matrix
    */
   [[nodiscard]] static const TMatrixType rightJacobian(const VectorType& u) { return leftJacobian(-u); }
+
+  /**
+   * @brief SEn3 inverse right Jacobian matrix
+   *
+   * @param u R(3+3n) vector
+   *
+   * @return SEn3 inverse right Jacobian matrix
+   */
+  [[nodiscard]] static const TMatrixType invRightJacobian(const VectorType& u) { return invLeftJacobian(-u); }
 
   /**
    * @brief The exponential map for SEn3.
@@ -220,7 +256,7 @@ class SEn3
   {
     VectorType u = VectorType::Zero();
     u.template block<3, 1>(0, 0) = SO3Type::log(X.C_);
-    typename SO3Type::MatrixType invSO3JL = SO3Type::leftJacobian(u.template block<3, 1>(0, 0)).inverse();
+    typename SO3Type::MatrixType invSO3JL = SO3Type::invLeftJacobian(u.template block<3, 1>(0, 0));
     for (int i = 0; i < n; ++i)
     {
       u.template block<3, 1>(3 + 3 * i, 0) = invSO3JL * X.t_[i];

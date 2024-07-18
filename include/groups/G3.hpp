@@ -191,7 +191,6 @@ class G3
     {
       return TMatrixType::Identity() - 0.5 * adjoint(u);
     }
-
     typename SO3Type::MatrixType invSO3JL = SO3Type::invLeftJacobian(w);
     typename SO3Type::MatrixType SO3Gamma2 = SO3Type::Gamma2(w);
     typename SO3Type::MatrixType U1 = G3leftJacobianU1(w);
@@ -219,6 +218,15 @@ class G3
    * @return G3 right Jacobian matrix
    */
   [[nodiscard]] static const TMatrixType rightJacobian(const VectorType& u) { return leftJacobian(-u); }
+
+  /**
+   * @brief G3 inverse right Jacobian matrix
+   *
+   * @param u R10 vector
+   *
+   * @return G3 inverse right Jacobian matrix
+   */
+  [[nodiscard]] static const TMatrixType invRightJacobian(const VectorType& u) { return invLeftJacobian(-u); }
 
   /**
    * @brief The exponential map for G3.
@@ -263,7 +271,7 @@ class G3
   {
     VectorType u = VectorType::Zero();
     u.template block<3, 1>(0, 0) = SO3Type::log(X.C_);
-    typename SO3Type::MatrixType invSO3JL = SO3Type::leftJacobian(u.template block<3, 1>(0, 0)).inverse();
+    typename SO3Type::MatrixType invSO3JL = SO3Type::invLeftJacobian(u.template block<3, 1>(0, 0));
     u.template block<3, 1>(3, 0) = invSO3JL * X.t_[0];
     u.template block<3, 1>(6, 0) =
         invSO3JL * (X.t_[1] - X.s_ * SO3Type::Gamma2(u.template block<3, 1>(0, 0)) * u.template block<3, 1>(3, 0));
