@@ -1,6 +1,8 @@
 # Lie++
 
 [![License](https://img.shields.io/badge/License-AAUCNS-336B81.svg)](./LICENSE)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/aau-cns/Lie-plusplus/cmake-build-and-test.yml?label=Test)
+
 
 ![Lie-plusplus logo](./resources/lie-plusplus-logo.png)
 
@@ -27,8 +29,8 @@ Lie++ is a header-only C++ library based on Eigen for Lie groups. It provides a 
 | SEn(3)       | SLAM                              |
 | G(3)         | Discrete-time Inertial navigation |
 | SOT(3)       | Rotation and scaling              |
-| TG(3)        | Inertial navigation with IMU bias |
-| SDB(3)       | Inertial navigation with IMU bias |
+| TG           | Inertial navigation with IMU bias |
+| SDB          | Inertial navigation with IMU bias |
 
 ## Installation
 
