@@ -151,13 +151,16 @@ class G3
     typename SO3Type::VectorType w = u.template block<3, 1>(0, 0);
     typename SO3Type::VectorType v = u.template block<3, 1>(3, 0);
     typename SO3Type::VectorType p = u.template block<3, 1>(6, 0);
+
     Scalar s = u(9);
     FPType ang = w.norm();
     if (ang < eps_)
     {
       return TMatrixType::Identity() + 0.5 * adjoint(u);
     }
+
     typename SO3Type::MatrixType SO3JL = SO3Type::leftJacobian(w);
+
     TMatrixType J = TMatrixType::Identity();
     J.template block<3, 3>(0, 0) = SO3JL;
     J.template block<3, 3>(3, 0) = G3leftJacobianQ1(w, v);
@@ -166,6 +169,45 @@ class G3
     J.template block<3, 3>(6, 3) = -s * G3leftJacobianU1(w);
     J.template block<3, 3>(6, 6) = SO3JL;
     J.template block<3, 1>(6, 9) = SO3Type::Gamma2(w) * v;
+    return J;
+  }
+
+  /**
+   * @brief G3 inverse left Jacobian matrix
+   *
+   * @param u R10 vector
+   *
+   * @return G3 inverse left Jacobian matrix
+   */
+  [[nodiscard]] static const TMatrixType invLeftJacobian(const VectorType& u)
+  {
+    typename SO3Type::VectorType w = u.template block<3, 1>(0, 0);
+    typename SO3Type::VectorType v = u.template block<3, 1>(3, 0);
+    typename SO3Type::VectorType p = u.template block<3, 1>(6, 0);
+
+    Scalar s = u(9);
+    FPType ang = w.norm();
+    if (ang < eps_)
+    {
+      return TMatrixType::Identity() - 0.5 * adjoint(u);
+    }
+
+    typename SO3Type::MatrixType invSO3JL = SO3Type::invLeftJacobian(w);
+    typename SO3Type::MatrixType SO3Gamma2 = SO3Type::Gamma2(w);
+    typename SO3Type::MatrixType U1 = G3leftJacobianU1(w);
+    typename SO3Type::MatrixType Q1p = G3leftJacobianQ1(w, p);
+    typename SO3Type::MatrixType Q1v = G3leftJacobianQ1(w, v);
+    typename SO3Type::MatrixType Q2v = G3leftJacobianQ2(w, v);
+    typename SO3Type::MatrixType JiQJiv = invSO3JL * Q1v * invSO3JL;
+
+    TMatrixType J = TMatrixType::Identity();
+    J.template block<3, 3>(0, 0) = invSO3JL;
+    J.template block<3, 3>(3, 0) = -JiQJiv;
+    J.template block<3, 3>(3, 3) = invSO3JL;
+    J.template block<3, 3>(6, 0) = -invSO3JL * (Q1p * invSO3JL - s * (Q2v * invSO3JL - U1 * JiQJiv));
+    J.template block<3, 3>(6, 3) = s * invSO3JL * U1 * invSO3JL;
+    J.template block<3, 3>(6, 6) = invSO3JL;
+    J.template block<3, 1>(6, 9) = -invSO3JL * SO3Gamma2 * v;
     return J;
   }
 

@@ -218,6 +218,36 @@ TYPED_TEST(G3GroupsTest, TestLeftJacobian)
     adx = TypeParam::adjoint(x);
     Jlx = TypeParam::leftJacobian(x);
     MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
+
+    x = 1e-12 * TypeParam::VectorType::Random();
+    Jlx = TypeParam::leftJacobian(x);
+    auto invJlx = TypeParam::invLeftJacobian(x);
+    MatrixEquality(Jlx * invJlx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJlx * Jlx, TypeParam::TMatrixType::Identity());
+
+    x = TypeParam::VectorType::Random();
+    Jlx = TypeParam::leftJacobian(x);
+    invJlx = TypeParam::invLeftJacobian(x);
+    MatrixEquality(Jlx * invJlx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJlx * Jlx, TypeParam::TMatrixType::Identity());
+  }
+}
+
+TYPED_TEST(G3GroupsTest, TestRightJacobian)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    typename TypeParam::VectorType x = 1e-12 * TypeParam::VectorType::Random();
+    auto Jrx = TypeParam::rightJacobian(x);
+    auto invJrx = TypeParam::invRightJacobian(x);
+    MatrixEquality(Jrx * invJrx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJrx * Jrx, TypeParam::TMatrixType::Identity());
+
+    x = TypeParam::VectorType::Random();
+    Jrx = TypeParam::rightJacobian(x);
+    invJrx = TypeParam::invRightJacobian(x);
+    MatrixEquality(Jrx * invJrx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJrx * Jrx, TypeParam::TMatrixType::Identity());
   }
 }
 
@@ -992,6 +1022,60 @@ TYPED_TEST(SO3GroupsTest, TestGroupProduct)
   }
 }
 
+TYPED_TEST(SO3GroupsTest, TestLeftJacobian)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    typename TypeParam::VectorType x = TypeParam::VectorType::Zero();
+    auto AdEx = TypeParam::exp(x).Adjoint();
+    auto adx = TypeParam::adjoint(x);
+    auto Jlx = TypeParam::leftJacobian(x);
+    MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
+
+    x = 1e-12 * TypeParam::VectorType::Random();
+    AdEx = TypeParam::exp(x).Adjoint();
+    adx = TypeParam::adjoint(x);
+    Jlx = TypeParam::leftJacobian(x);
+    MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
+
+    x = TypeParam::VectorType::Random();
+    AdEx = TypeParam::exp(x).Adjoint();
+    adx = TypeParam::adjoint(x);
+    Jlx = TypeParam::leftJacobian(x);
+    MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
+
+    x = 1e-12 * TypeParam::VectorType::Random();
+    Jlx = TypeParam::leftJacobian(x);
+    auto invJlx = TypeParam::invLeftJacobian(x);
+    MatrixEquality(Jlx * invJlx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJlx * Jlx, TypeParam::TMatrixType::Identity());
+
+    x = TypeParam::VectorType::Random();
+    Jlx = TypeParam::leftJacobian(x);
+    invJlx = TypeParam::invLeftJacobian(x);
+    MatrixEquality(Jlx * invJlx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJlx * Jlx, TypeParam::TMatrixType::Identity());
+  }
+}
+
+TYPED_TEST(SO3GroupsTest, TestRightJacobian)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    typename TypeParam::VectorType x = 1e-12 * TypeParam::VectorType::Random();
+    auto Jrx = TypeParam::rightJacobian(x);
+    auto invJrx = TypeParam::invRightJacobian(x);
+    MatrixEquality(Jrx * invJrx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJrx * Jrx, TypeParam::TMatrixType::Identity());
+
+    x = TypeParam::VectorType::Random();
+    Jrx = TypeParam::rightJacobian(x);
+    invJrx = TypeParam::invRightJacobian(x);
+    MatrixEquality(Jrx * invJrx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJrx * Jrx, TypeParam::TMatrixType::Identity());
+  }
+}
+
 /**
  * @brief SOT3 specific tests
  */
@@ -1143,6 +1227,60 @@ TYPED_TEST(SOT3GroupsTest, TestGroupProduct)
     auto Z = X * Y;
 
     MatrixEquality(Z, X.asMatrix() * Y);
+  }
+}
+
+TYPED_TEST(SOT3GroupsTest, TestLeftJacobian)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    typename TypeParam::VectorType x = TypeParam::VectorType::Zero();
+    auto AdEx = TypeParam::exp(x).Adjoint();
+    auto adx = TypeParam::adjoint(x);
+    auto Jlx = TypeParam::leftJacobian(x);
+    MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
+
+    x = 1e-12 * TypeParam::VectorType::Random();
+    AdEx = TypeParam::exp(x).Adjoint();
+    adx = TypeParam::adjoint(x);
+    Jlx = TypeParam::leftJacobian(x);
+    MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
+
+    x = TypeParam::VectorType::Random();
+    AdEx = TypeParam::exp(x).Adjoint();
+    adx = TypeParam::adjoint(x);
+    Jlx = TypeParam::leftJacobian(x);
+    MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
+
+    x = 1e-12 * TypeParam::VectorType::Random();
+    Jlx = TypeParam::leftJacobian(x);
+    auto invJlx = TypeParam::invLeftJacobian(x);
+    MatrixEquality(Jlx * invJlx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJlx * Jlx, TypeParam::TMatrixType::Identity());
+
+    x = TypeParam::VectorType::Random();
+    Jlx = TypeParam::leftJacobian(x);
+    invJlx = TypeParam::invLeftJacobian(x);
+    MatrixEquality(Jlx * invJlx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJlx * Jlx, TypeParam::TMatrixType::Identity());
+  }
+}
+
+TYPED_TEST(SOT3GroupsTest, TestRightJacobian)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    typename TypeParam::VectorType x = 1e-12 * TypeParam::VectorType::Random();
+    auto Jrx = TypeParam::rightJacobian(x);
+    auto invJrx = TypeParam::invRightJacobian(x);
+    MatrixEquality(Jrx * invJrx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJrx * Jrx, TypeParam::TMatrixType::Identity());
+
+    x = TypeParam::VectorType::Random();
+    Jrx = TypeParam::rightJacobian(x);
+    invJrx = TypeParam::invRightJacobian(x);
+    MatrixEquality(Jrx * invJrx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJrx * Jrx, TypeParam::TMatrixType::Identity());
   }
 }
 
@@ -1363,6 +1501,36 @@ TYPED_TEST(SEn3GroupsTest, TestLeftJacobian)
     adx = TypeParam::adjoint(x);
     Jlx = TypeParam::leftJacobian(x);
     MatrixEquality(AdEx, TypeParam::TMatrixType::Identity() + adx * Jlx);
+
+    x = 1e-12 * TypeParam::VectorType::Random();
+    Jlx = TypeParam::leftJacobian(x);
+    auto invJlx = TypeParam::invLeftJacobian(x);
+    MatrixEquality(Jlx * invJlx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJlx * Jlx, TypeParam::TMatrixType::Identity());
+
+    x = TypeParam::VectorType::Random();
+    Jlx = TypeParam::leftJacobian(x);
+    invJlx = TypeParam::invLeftJacobian(x);
+    MatrixEquality(Jlx * invJlx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJlx * Jlx, TypeParam::TMatrixType::Identity());
+  }
+}
+
+TYPED_TEST(SEn3GroupsTest, TestRightJacobian)
+{
+  for (int i = 0; i < N_TESTS; ++i)
+  {
+    typename TypeParam::VectorType x = 1e-12 * TypeParam::VectorType::Random();
+    auto Jrx = TypeParam::rightJacobian(x);
+    auto invJrx = TypeParam::invRightJacobian(x);
+    MatrixEquality(Jrx * invJrx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJrx * Jrx, TypeParam::TMatrixType::Identity());
+
+    x = TypeParam::VectorType::Random();
+    Jrx = TypeParam::rightJacobian(x);
+    invJrx = TypeParam::invRightJacobian(x);
+    MatrixEquality(Jrx * invJrx, TypeParam::TMatrixType::Identity());
+    MatrixEquality(invJrx * Jrx, TypeParam::TMatrixType::Identity());
   }
 }
 

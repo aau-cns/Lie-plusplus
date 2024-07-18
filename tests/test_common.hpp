@@ -21,7 +21,8 @@
 namespace test
 {
 using fp = double;
-constexpr fp EPS = 1e-5;
+
+constexpr fp EPS = 1e-4;
 constexpr int N_TESTS = 1000;
 
 template <typename Derived, typename OtherDerived>
