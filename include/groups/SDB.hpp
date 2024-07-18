@@ -77,7 +77,7 @@ class SemiDirectBias
   {
     VectorType u = VectorType::Zero();
     u.template block<9, 1>(0, 0) = SE23Type::log(X.D_);
-    u.template block<6, 1>(9, 0) = (SE3Type::leftJacobian(u.template block<6, 1>(0, 0))).inverse() * X.delta_;
+    u.template block<6, 1>(9, 0) = (SE3Type::invLeftJacobian(u.template block<6, 1>(0, 0))) * X.delta_;
     return u;
   }
 
