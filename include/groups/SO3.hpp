@@ -42,21 +42,33 @@ class SO3
   /**
    * @brief Construct an identity SO3 object
    */
-  SO3() : R_(MatrixType::Identity()), q_(QuaternionType::Identity()) { checkq(); }
+  SO3() : R_(MatrixType::Identity()), q_(QuaternionType::Identity()) {}
 
   /**
    * @brief Construct a SO3 object from a given normalized quaternion.
    *
    * @param q Quaternion
    */
-  SO3(const QuaternionType& q) : R_(q.toRotationMatrix()), q_(q) { checkq(); }
+  SO3(const QuaternionType& q) : R_(q.toRotationMatrix()), q_(q)
+  {
+    if (!isNormalized())
+    {
+      normalize();
+    }
+  }
 
   /**
    * @brief Construct a SO3 object from a given rotation matrix
    *
    * @param R Rotation matrix
    */
-  SO3(const MatrixType& R) : R_(R), q_(R) { checkq(); }
+  SO3(const MatrixType& R) : R_(R), q_(R)
+  {
+    if (!isNormalized())
+    {
+      normalize();
+    }
+  }
 
   /**
    * @brief Construct a SO3 object from two vector such that Ru = v
@@ -90,8 +102,6 @@ class SO3
       R_ = MatrixType::Identity() + wedge(ax) + ((1.0 - c) / (s * s)) * (wedge(ax) * wedge(ax));
       q_ = QuaternionType(R_);
     }
-
-    checkq();
   }
 
   /**
@@ -390,7 +400,10 @@ class SO3
     q_ = q;
     R_ = q.toRotationMatrix();
 
-    checkq();
+    if (!isNormalized())
+    {
+      normalize();
+    }
   }
 
   /**
@@ -403,7 +416,10 @@ class SO3
     q_ = R;
     R_ = R;
 
-    checkq();
+    if (!isNormalized())
+    {
+      normalize();
+    }
   }
 
   /**
@@ -423,13 +439,18 @@ class SO3
  protected:
   /**
    * @brief Check that q_ is a normalized quaternion
+   *
+   * @return true if q_ is normalized
    */
-  void checkq()
+  [[nodiscard]] bool isNormalized() { return std::abs(q_.norm() - 1.0) < eps_; }
+
+  /**
+   * @brief Normalize the quaternion and update the rotation matrix
+   */
+  void normalize()
   {
-    if (std::abs(q_.norm() - 1.0) > eps_)
-    {
-      throw std::invalid_argument("SO3: QuaternionType has to be normalized!");
-    }
+    q_.normalize();
+    R_ = q_.toRotationMatrix();
   }
 
   MatrixType R_;      //!< Rotation matrix
