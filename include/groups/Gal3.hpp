@@ -10,8 +10,8 @@
 // You can contact the authors at <alessandro.fornasier@ieee.org>,
 // <giulio.delama@ieee.org>.
 
-#ifndef Gal3_HPP
-#define Gal3_HPP
+#ifndef GAL3_HPP
+#define GAL3_HPP
 
 #include <array>
 
@@ -20,7 +20,7 @@
 namespace group
 {
 /**
- * @brief the Galileian group Gal(3). This is the Lie group of 3D rotations,
+ * @brief the Galilean group Gal(3). This is the Lie group of 3D rotations,
  * translations in space and time, and transformations between frames of reference
  * that differ only by constant relative motion.
  *
@@ -590,4 +590,4 @@ using Gal3f = Gal3<float>;   //!< The Gal3 group with single precision floating 
 
 }  // namespace group
 
-#endif  // Gal3_HPP
+#endif  // GAL3_HPP

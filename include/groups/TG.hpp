@@ -200,7 +200,7 @@ class SEn3TG : public Tangent<SEn3<FPType, n>>
 
 /**
  * @brief The Gal3 Tangent group. This derived class represents the core components of the symmetry group
- * for equivariant IMU preintegration
+ * for equivariant IMU preintegration [preprint: https://arxiv.org/abs/2411.05548]
  *
  * @tparam FPType. Floating point type (float, double, long double)
  *
