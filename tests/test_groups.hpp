@@ -21,7 +21,7 @@
 #include "groups/SDB.hpp"
 #include "groups/SOT3.hpp"
 #include "groups/TG.hpp"
-#include "groups/G3.hpp"
+#include "groups/Gal3.hpp"
 
 #include "utils/tools.hpp"
 
@@ -35,20 +35,20 @@ typedef testing::Types<SE3d, SE3f> SE3Groups;
 typedef testing::Types<SE3d, SE3f, SE23f, SE23d> SEn3Groups;
 typedef testing::Types<SDBf, SDBd> SDBGroups;
 typedef testing::Types<SE23TGf, SE23TGd> SE23TGGroups;
-typedef testing::Types<G3TGf, G3TGd> G3TGGroups;
+typedef testing::Types<Gal3TGf, Gal3TGd> Gal3TGGroups;
 typedef testing::Types<Inf, Ind> INGroups;
-typedef testing::Types<G3f, G3d> G3Groups;
+typedef testing::Types<Gal3f, Gal3d> Gal3Groups;
 
 /**
  * @brief Inhomogeneous Galileian group specific tests
  */
 template <typename T>
-class G3GroupsTest : public testing::Test
+class Gal3GroupsTest : public testing::Test
 {
 };
-TYPED_TEST_SUITE(G3GroupsTest, G3Groups);
+TYPED_TEST_SUITE(Gal3GroupsTest, Gal3Groups);
 
-TYPED_TEST(G3GroupsTest, G3Constructors)
+TYPED_TEST(Gal3GroupsTest, Gal3Constructors)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -131,7 +131,7 @@ TYPED_TEST(G3GroupsTest, G3Constructors)
   }
 }
 
-TYPED_TEST(G3GroupsTest, G3Setters)
+TYPED_TEST(Gal3GroupsTest, Gal3Setters)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -158,7 +158,7 @@ TYPED_TEST(G3GroupsTest, G3Setters)
   }
 }
 
-TYPED_TEST(G3GroupsTest, TestExpLog)
+TYPED_TEST(Gal3GroupsTest, TestExpLog)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -176,7 +176,7 @@ TYPED_TEST(G3GroupsTest, TestExpLog)
   }
 }
 
-TYPED_TEST(G3GroupsTest, TestAdjoint)
+TYPED_TEST(Gal3GroupsTest, TestAdjoint)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -197,7 +197,7 @@ TYPED_TEST(G3GroupsTest, TestAdjoint)
   }
 }
 
-TYPED_TEST(G3GroupsTest, TestLeftJacobian)
+TYPED_TEST(Gal3GroupsTest, TestLeftJacobian)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -233,7 +233,7 @@ TYPED_TEST(G3GroupsTest, TestLeftJacobian)
   }
 }
 
-TYPED_TEST(G3GroupsTest, TestRightJacobian)
+TYPED_TEST(Gal3GroupsTest, TestRightJacobian)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -251,7 +251,7 @@ TYPED_TEST(G3GroupsTest, TestRightJacobian)
   }
 }
 
-TYPED_TEST(G3GroupsTest, TestAssociativity)
+TYPED_TEST(Gal3GroupsTest, TestAssociativity)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -266,7 +266,7 @@ TYPED_TEST(G3GroupsTest, TestAssociativity)
   }
 }
 
-TYPED_TEST(G3GroupsTest, TestIdentity)
+TYPED_TEST(Gal3GroupsTest, TestIdentity)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -284,7 +284,7 @@ TYPED_TEST(G3GroupsTest, TestIdentity)
   }
 }
 
-TYPED_TEST(G3GroupsTest, TestInverse)
+TYPED_TEST(Gal3GroupsTest, TestInverse)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -300,7 +300,7 @@ TYPED_TEST(G3GroupsTest, TestInverse)
   }
 }
 
-TYPED_TEST(G3GroupsTest, TestGroupProduct)
+TYPED_TEST(Gal3GroupsTest, TestGroupProduct)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -501,15 +501,15 @@ TYPED_TEST(SE23TGGroupsTest, TestGroupProduct)
 }
 
 /**
- * @brief G3 Tangent group specific tests
+ * @brief Gal3 Tangent group specific tests
  */
 template <typename T>
-class G3TGGroupsTest : public testing::Test
+class Gal3TGGroupsTest : public testing::Test
 {
 };
-TYPED_TEST_SUITE(G3TGGroupsTest, G3TGGroups);
+TYPED_TEST_SUITE(Gal3TGGroupsTest, Gal3TGGroups);
 
-TYPED_TEST(G3TGGroupsTest, G3TGGroupsConstructors)
+TYPED_TEST(Gal3TGGroupsTest, Gal3TGGroupsConstructors)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -535,7 +535,7 @@ TYPED_TEST(G3TGGroupsTest, G3TGGroupsConstructors)
   }
 }
 
-TYPED_TEST(G3TGGroupsTest, TestExpLog)
+TYPED_TEST(Gal3TGGroupsTest, TestExpLog)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -555,7 +555,7 @@ TYPED_TEST(G3TGGroupsTest, TestExpLog)
     X = TypeParam::exp(x);
 
     Eigen::Matrix<typename TypeParam::Scalar, 11, 11> W = Eigen::Matrix<typename TypeParam::Scalar, 11, 11>::Zero();
-    W.block(0, 0, 10, 10) = G3<typename TypeParam::Scalar>::adjoint(x.segment(0, 10));
+    W.block(0, 0, 10, 10) = Gal3<typename TypeParam::Scalar>::adjoint(x.segment(0, 10));
     W.block(0, 10, 10, 1) = x.segment(10, 10);
 
     auto E = W.exp();
@@ -565,7 +565,7 @@ TYPED_TEST(G3TGGroupsTest, TestExpLog)
   }
 }
 
-TYPED_TEST(G3TGGroupsTest, TestAssociativity)
+TYPED_TEST(Gal3TGGroupsTest, TestAssociativity)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -581,7 +581,7 @@ TYPED_TEST(G3TGGroupsTest, TestAssociativity)
   }
 }
 
-TYPED_TEST(G3TGGroupsTest, TestIdentity)
+TYPED_TEST(Gal3TGGroupsTest, TestIdentity)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -602,7 +602,7 @@ TYPED_TEST(G3TGGroupsTest, TestIdentity)
   }
 }
 
-TYPED_TEST(G3TGGroupsTest, TestInverse)
+TYPED_TEST(Gal3TGGroupsTest, TestInverse)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {
@@ -620,7 +620,7 @@ TYPED_TEST(G3TGGroupsTest, TestInverse)
   }
 }
 
-TYPED_TEST(G3TGGroupsTest, TestGroupProduct)
+TYPED_TEST(Gal3TGGroupsTest, TestGroupProduct)
 {
   for (int i = 0; i < N_TESTS; ++i)
   {

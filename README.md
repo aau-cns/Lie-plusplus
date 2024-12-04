@@ -27,7 +27,7 @@ Lie++ is a header-only C++ library based on Eigen for Lie groups. It provides a 
 | SE(3)        | Pose                              |
 | SE2(3)       | Extended pose                     |
 | SEn(3)       | SLAM                              |
-| G(3)         | Discrete-time Inertial navigation |
+| Gal(3)       | Discrete-time Inertial navigation |
 | SOT(3)       | Rotation and scaling              |
 | TG           | Inertial navigation with IMU bias |
 | SDB          | Inertial navigation with IMU bias |
