@@ -15,7 +15,7 @@
 #define TG_HPP
 
 #include "SEn3.hpp"
-#include "G3.hpp"
+#include "Gal3.hpp"
 
 namespace group
 {
@@ -199,23 +199,23 @@ class SEn3TG : public Tangent<SEn3<FPType, n>>
 };
 
 /**
- * @brief The G3 Tangent group. This derived class represents the core components of the symmetry group
- * for equivariant IMU preintegration
+ * @brief The Gal3 Tangent group. This derived class represents the core components of the symmetry group
+ * for equivariant IMU preintegration [preprint: https://arxiv.org/abs/2411.05548]
  *
  * @tparam FPType. Floating point type (float, double, long double)
  *
  */
 template <typename FPType>
-class G3TG : public Tangent<G3<FPType>>
+class Gal3TG : public Tangent<Gal3<FPType>>
 {
  public:
-  using BaseType = Tangent<G3<FPType>>;
+  using BaseType = Tangent<Gal3<FPType>>;
   using SE3Type = SEn3<FPType, 1>;  //!< The underlying SE3 type
 
   /**
    * @brief Default constructor
    */
-  G3TG() : BaseType() {}
+  Gal3TG() : BaseType() {}
 
   /**
    * @brief Construct a SEn3TG object from a given group object and vector
@@ -223,7 +223,7 @@ class G3TG : public Tangent<G3<FPType>>
    * @param G Lie group element
    * @param g Lie algebra vector
    */
-  G3TG(const typename BaseType::Group& G, const typename BaseType::Group::VectorType& g) : BaseType(G, g) {}
+  Gal3TG(const typename BaseType::Group& G, const typename BaseType::Group::VectorType& g) : BaseType(G, g) {}
 
   /**
    * @brief Get a constant copy of B (the SE3 subgroup of SE23 composed by the rotational component (R) and the first
@@ -244,8 +244,8 @@ class G3TG : public Tangent<G3<FPType>>
 
 using SE23TGd = SEn3TG<double, 2>;  //!< The SE23 tangent group with double precision floating point
 using SE23TGf = SEn3TG<float, 2>;   //!< The SE23 tangent group with single precision floating point
-using G3TGd = G3TG<double>;         //!< The G3 tangent group with double precision floating point
-using G3TGf = G3TG<float>;          //!< The G3 tangent group with single precision floating point
+using Gal3TGd = Gal3TG<double>;     //!< The Gal3 tangent group with double precision floating point
+using Gal3TGf = Gal3TG<float>;      //!< The Gal3 tangent group with single precision floating point
 
 }  // namespace group
 

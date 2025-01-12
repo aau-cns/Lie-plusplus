@@ -10,8 +10,8 @@
 // You can contact the authors at <alessandro.fornasier@ieee.org>,
 // <giulio.delama@ieee.org>.
 
-#ifndef G3_HPP
-#define G3_HPP
+#ifndef GAL3_HPP
+#define GAL3_HPP
 
 #include <array>
 
@@ -20,7 +20,7 @@
 namespace group
 {
 /**
- * @brief the Inhomogeneous Galileian group (G3). This group is the group of 3D rotations,
+ * @brief the Galilean group Gal(3). This is the Lie group of 3D rotations,
  * translations in space and time, and transformations between frames of reference
  * that differ only by constant relative motion.
  *
@@ -29,67 +29,69 @@ namespace group
  * @note Galilei invariant theories [https://arxiv.org/abs/math-ph/0604002]
  * @note Constructive Equivariant Observer Design for Inertial Velocity-Aided
  * Attitude [https://arxiv.org/pdf/2209.03564.pdf]
+ * @note Equivariant IMU Preintegration with Biases: a Galilean Group Approach [preprint:
+ * https://arxiv.org/abs/2411.05548]
  */
 template <typename FPType>
-class G3
+class Gal3
 {
  public:
   using Scalar = FPType;                              //!< The underlying scalar type
   using SO3Type = SO3<FPType>;                        //!< The underlying SO3 type
-  using VectorType = Eigen::Matrix<FPType, 10, 1>;    //!< R10 Vectorspace element type (isomorphic to Lie Algebra g3)
+  using VectorType = Eigen::Matrix<FPType, 10, 1>;    //!< R10 Vectorspace element type (isomorphic to Lie Algebra gal3)
   using MatrixType = Eigen::Matrix<FPType, 5, 5>;     //!< Lie Algebra / Lie Group matrix type
   using TMatrixType = Eigen::Matrix<FPType, 10, 10>;  //!< Transformation matrix type
   using IsometriesType = std::array<typename SO3Type::VectorType, 2>;  //!< Vector of translations (Isometries)
 
   /**
-   * @brief Construct an identity G3 object
+   * @brief Construct an identity Gal3 object
    */
-  G3() : C_(SO3Type()), t_(), s_(0.0) { t_.fill(SO3Type::VectorType::Zero()); }
+  Gal3() : C_(SO3Type()), t_(), s_(0.0) { t_.fill(SO3Type::VectorType::Zero()); }
 
   /**
-   * @brief Construct a G3 object from a given normalized quaternion, an array of vectors, and a scalar factor.
+   * @brief Construct a Gal3 object from a given normalized quaternion, an array of vectors, and a scalar factor.
    *
    * @param q Quaternion
    * @param t Array of R3 vectors
    * @param s Scalar factor
    */
-  G3(const typename SO3Type::QuaternionType& q, const IsometriesType& t, const Scalar& s) : C_(q), t_(t), s_(s) {}
+  Gal3(const typename SO3Type::QuaternionType& q, const IsometriesType& t, const Scalar& s) : C_(q), t_(t), s_(s) {}
 
   /**
-   * @brief Construct a G3 object from a given rotation matrix, an array of vectors, and a scalar factor.
+   * @brief Construct a Gal3 object from a given rotation matrix, an array of vectors, and a scalar factor.
    *
    * @param R Rotation matrix
    * @param t Array of R3 vectors
    * @param s Scalar factor
    */
-  G3(const typename SO3Type::MatrixType& R, const IsometriesType& t, const Scalar& s) : C_(R), t_(t), s_(s) {}
+  Gal3(const typename SO3Type::MatrixType& R, const IsometriesType& t, const Scalar& s) : C_(R), t_(t), s_(s) {}
 
   /**
-   * @brief Construct a G3 object from a given SO3 object, an array of vectors, and a scalar factor.
+   * @brief Construct a Gal3 object from a given SO3 object, an array of vectors, and a scalar factor.
    *
    * @param C SO3 group element
    * @param t Array of R3 vectors
    * @param s Scalar factor
    */
-  G3(const SO3Type& C, const IsometriesType& t, const Scalar& s) : C_(C), t_(t), s_(s) {}
+  Gal3(const SO3Type& C, const IsometriesType& t, const Scalar& s) : C_(C), t_(t), s_(s) {}
 
   /**
-   * @brief Construct a G3 object from a given matrix
+   * @brief Construct a Gal3 object from a given matrix
    *
-   * @param X G3 group element in matrix form
+   * @param X Gal3 group element in matrix form
    */
-  G3(const MatrixType& X) : C_(X.template block<3, 3>(0, 0)), t_(), s_(X(3, 4))
+  Gal3(const MatrixType& X) : C_(X.template block<3, 3>(0, 0)), t_(), s_(X(3, 4))
   {
     t_[0] = X.template block<3, 1>(0, 3);
     t_[1] = X.template block<3, 1>(0, 4);
   }
 
   /**
-   * @brief wedge operator, transform a vector in R10 to a matrix in g3
+   * @brief wedge operator, transform a vector in R10 to a matrix in gal3
    *
    * @param u R10 vector
    *
-   * @return g3 Lie algebra element in matrix form
+   * @return gal3 Lie algebra element in matrix form
    */
   [[nodiscard]] static const MatrixType wedge(const VectorType& u)
   {
@@ -102,9 +104,9 @@ class G3
   }
 
   /**
-   * @brief Transform a matrix in g3 to a vector in R10
+   * @brief Transform a matrix in gal3 to a vector in R10
    *
-   * @param U G3 Lie algebra element in matrix form
+   * @param U Gal3 Lie algebra element in matrix form
    *
    * @return R10 vector
    */
@@ -119,11 +121,11 @@ class G3
   }
 
   /**
-   * @brief g3 adjoint matrix
+   * @brief gal3 adjoint matrix
    *
    * @param u R10 vector
    *
-   * @return G3 Lie algebra adjoint matrix
+   * @return Gal3 Lie algebra adjoint matrix
    */
   [[nodiscard]] static const TMatrixType adjoint(const VectorType& u)
   {
@@ -140,51 +142,47 @@ class G3
   }
 
   /**
-   * @brief G3 left Jacobian matrix
+   * @brief Gal3 left Jacobian matrix
    *
    * @param u R10 vector
    *
-   * @return G3 left Jacobian matrix
+   * @return Gal3 left Jacobian matrix
    */
   [[nodiscard]] static const TMatrixType leftJacobian(const VectorType& u)
   {
     typename SO3Type::VectorType w = u.template block<3, 1>(0, 0);
     typename SO3Type::VectorType v = u.template block<3, 1>(3, 0);
     typename SO3Type::VectorType p = u.template block<3, 1>(6, 0);
-
     Scalar s = u(9);
     FPType ang = w.norm();
     if (ang < eps_)
     {
       return TMatrixType::Identity() + 0.5 * adjoint(u);
     }
-
     typename SO3Type::MatrixType SO3JL = SO3Type::leftJacobian(w);
-
     TMatrixType J = TMatrixType::Identity();
     J.template block<3, 3>(0, 0) = SO3JL;
-    J.template block<3, 3>(3, 0) = G3leftJacobianQ1(w, v);
+    J.template block<3, 3>(3, 0) = Gal3leftJacobianQ1(w, v);
     J.template block<3, 3>(3, 3) = SO3JL;
-    J.template block<3, 3>(6, 0) = G3leftJacobianQ1(w, p) - s * G3leftJacobianQ2(w, v);
-    J.template block<3, 3>(6, 3) = -s * G3leftJacobianU1(w);
+    J.template block<3, 3>(6, 0) = Gal3leftJacobianQ1(w, p) - s * Gal3leftJacobianQ2(w, v);
+    J.template block<3, 3>(6, 3) = -s * Gal3leftJacobianU1(w);
     J.template block<3, 3>(6, 6) = SO3JL;
     J.template block<3, 1>(6, 9) = SO3Type::Gamma2(w) * v;
     return J;
   }
 
   /**
-   * @brief G3 inverse left Jacobian matrix
+   * @brief Gal3 inverse left Jacobian matrix
    *
    * @param u R10 vector
    *
-   * @return G3 inverse left Jacobian matrix
+   * @return Gal3 inverse left Jacobian matrix
    */
   [[nodiscard]] static const TMatrixType invLeftJacobian(const VectorType& u)
   {
     typename SO3Type::VectorType w = u.template block<3, 1>(0, 0);
     typename SO3Type::VectorType v = u.template block<3, 1>(3, 0);
     typename SO3Type::VectorType p = u.template block<3, 1>(6, 0);
-
     Scalar s = u(9);
     FPType ang = w.norm();
     if (ang < eps_)
@@ -193,12 +191,11 @@ class G3
     }
     typename SO3Type::MatrixType invSO3JL = SO3Type::invLeftJacobian(w);
     typename SO3Type::MatrixType SO3Gamma2 = SO3Type::Gamma2(w);
-    typename SO3Type::MatrixType U1 = G3leftJacobianU1(w);
-    typename SO3Type::MatrixType Q1p = G3leftJacobianQ1(w, p);
-    typename SO3Type::MatrixType Q1v = G3leftJacobianQ1(w, v);
-    typename SO3Type::MatrixType Q2v = G3leftJacobianQ2(w, v);
+    typename SO3Type::MatrixType U1 = Gal3leftJacobianU1(w);
+    typename SO3Type::MatrixType Q1p = Gal3leftJacobianQ1(w, p);
+    typename SO3Type::MatrixType Q1v = Gal3leftJacobianQ1(w, v);
+    typename SO3Type::MatrixType Q2v = Gal3leftJacobianQ2(w, v);
     typename SO3Type::MatrixType JiQJiv = invSO3JL * Q1v * invSO3JL;
-
     TMatrixType J = TMatrixType::Identity();
     J.template block<3, 3>(0, 0) = invSO3JL;
     J.template block<3, 3>(3, 0) = -JiQJiv;
@@ -211,32 +208,32 @@ class G3
   }
 
   /**
-   * @brief G3 right Jacobian matrix
+   * @brief Gal3 right Jacobian matrix
    *
    * @param u R10 vector
    *
-   * @return G3 right Jacobian matrix
+   * @return Gal3 right Jacobian matrix
    */
   [[nodiscard]] static const TMatrixType rightJacobian(const VectorType& u) { return leftJacobian(-u); }
 
   /**
-   * @brief G3 inverse right Jacobian matrix
+   * @brief Gal3 inverse right Jacobian matrix
    *
    * @param u R10 vector
    *
-   * @return G3 inverse right Jacobian matrix
+   * @return Gal3 inverse right Jacobian matrix
    */
   [[nodiscard]] static const TMatrixType invRightJacobian(const VectorType& u) { return invLeftJacobian(-u); }
 
   /**
-   * @brief The exponential map for G3.
-   * Returns a G3 object given a vector u in R10 (equivalent to exp(wedge(u)))
+   * @brief The exponential map for Gal3.
+   * Returns a Gal3 object given a vector u in R10 (equivalent to exp(wedge(u)))
    *
    * @param u R10 vector
    *
-   * @return G3 group element
+   * @return Gal3 group element
    */
-  [[nodiscard]] static const G3 exp(const VectorType& u)
+  [[nodiscard]] static const Gal3 exp(const VectorType& u)
   {
     typename SO3Type::VectorType w = u.template block<3, 1>(0, 0);
     typename SO3Type::VectorType v = u.template block<3, 1>(3, 0);
@@ -246,28 +243,18 @@ class G3
     IsometriesType t;
     t[0] = SO3JL * v;
     t[1] = SO3JL * p + s * SO3Type::Gamma2(w) * v;
-    return G3(SO3Type::exp(w), t, s);
+    return Gal3(SO3Type::exp(w), t, s);
   }
 
-  // /**
-  //  * @brief The exponential map for G3.
-  //  * Returns a G3 object given a matrix U in g3
-  //  *
-  //  * @param U G3 Lie algebra element in matrix form
-  //  *
-  //  * @return G3 group element
-  //  */
-  // [[nodiscard]] static G3 exp(const MatrixType& U) { return exp(vee(U)); }
-
   /**
-   * @brief The logarithmic map for G3.
-   * Return a vector given a G3 object (equivalent to vee(log(X)))
+   * @brief The logarithmic map for Gal3.
+   * Return a vector given a Gal3 object (equivalent to vee(log(X)))
    *
-   * @param X G3 group element
+   * @param X Gal3 group element
    *
    * @return R10 vector
    */
-  [[nodiscard]] static const VectorType log(const G3& X)
+  [[nodiscard]] static const VectorType log(const Gal3& X)
   {
     VectorType u = VectorType::Zero();
     u.template block<3, 1>(0, 0) = SO3Type::log(X.C_);
@@ -280,41 +267,31 @@ class G3
     return u;
   }
 
-  // /**
-  //  * @brief The logarithmic map for G3.
-  //  * Return a g3 matrix given a G3 object
-  //  *
-  //  * @param X G3 group element
-  //  *
-  //  * @return G3 Lie algebra element in matrix form
-  //  */
-  // [[nodiscard]] static MatrixType log(const G3& X) { return wedge(log(X)); }
-
   /**
    * @brief Operator * overloading.
-   * Implements the G3 composition this * other
+   * Implements the Gal3 composition this * other
    *
-   * @param other G3 group element
+   * @param other Gal3 group element
    *
-   * @return G3 group element
+   * @return Gal3 group element
    *
    * @note usage: z = x * y
    */
-  [[nodiscard]] const G3 operator*(const G3& other) const
+  [[nodiscard]] const Gal3 operator*(const Gal3& other) const
   {
     IsometriesType t;
     t[0] = C_.R() * other.t_[0] + t_[0];
     t[1] = C_.R() * other.t_[1] + t_[0] * other.s_ + t_[1];
-    return G3(C_ * other.C_, t, s_ + other.s_);
+    return Gal3(C_ * other.C_, t, s_ + other.s_);
   }
 
   /**
    * @brief Operator * overloading.
-   * Implements the G3 composition this * other with a G3 group or alegra element in matrix form
+   * Implements the Gal3 composition this * other with a Gal3 group or alegra element in matrix form
    *
-   * @param other G3 group or algebra element in matrix form
+   * @param other Gal3 group or algebra element in matrix form
    *
-   * @return G3 group or algebra element in matrix form
+   * @return Gal3 group or algebra element in matrix form
    *
    * @note usage: z = x * y
    */
@@ -326,7 +303,7 @@ class G3
     if (!(is_algebra || is_group))
     {
       throw std::runtime_error(
-          "G3: operator* is defined only for composition with matrix form of G3 group or algebra elements");
+          "Gal3: operator* is defined only for composition with matrix form of Gal3 group or algebra elements");
     }
 
     MatrixType res = other;
@@ -346,13 +323,13 @@ class G3
   }
 
   /**
-   * @brief Implements the G3 composition this = this * other
+   * @brief Implements the Gal3 composition this = this * other
    *
-   * @param other G3 group element
+   * @param other Gal3 group element
    *
-   * @return G3 group element
+   * @return Gal3 group element
    */
-  const G3& multiplyRight(const G3& other)
+  const Gal3& multiplyRight(const Gal3& other)
   {
     t_[1] = (C_.R() * other.t_[1] + t_[0] * other.s_ + t_[1]).eval();
     t_[0] = (C_.R() * other.t_[0] + t_[0]).eval();
@@ -362,13 +339,13 @@ class G3
   }
 
   /**
-   * @brief Implements the G3 composition this = other * this
+   * @brief Implements the Gal3 composition this = other * this
    *
-   * @param other G3 group element
+   * @param other Gal3 group element
    *
-   * @return G3 group element
+   * @return Gal3 group element
    */
-  const G3& multiplyLeft(const G3& other)
+  const Gal3& multiplyLeft(const Gal3& other)
   {
     t_[1] = (other.C_.R() * t_[1] + other.t_[0] * s_ + other.t_[1]).eval();
     t_[0] = (other.C_.R() * t_[0] + other.t_[0]).eval();
@@ -378,16 +355,16 @@ class G3
   }
 
   /**
-   * @brief Get a constant copy of the inverse of the G3 object
+   * @brief Get a constant copy of the inverse of the Gal3 object
    *
-   * @return G3 group element
+   * @return Gal3 group element
    */
-  [[nodiscard]] const G3 inv() const
+  [[nodiscard]] const Gal3 inv() const
   {
     IsometriesType t;
     t[0] = -C_.R().transpose() * t_[0];
     t[1] = -C_.R().transpose() * (t_[1] - s_ * t_[0]);
-    return G3(C_.R().transpose(), t, -s_);
+    return Gal3(C_.R().transpose(), t, -s_);
   }
 
   /**
@@ -433,9 +410,9 @@ class G3
   [[nodiscard]] const Scalar& s() const { return s_; }
 
   /**
-   * @brief Get a constant copy of the G3 object as a matrix
+   * @brief Get a constant copy of the Gal3 object as a matrix
    *
-   * @return G3 group element in matrix form
+   * @return Gal3 group element in matrix form
    */
   [[nodiscard]] const MatrixType asMatrix() const
   {
@@ -448,9 +425,9 @@ class G3
   }
 
   /**
-   * @brief Set G3 object value from given matrix
+   * @brief Set Gal3 object value from given matrix
    *
-   * @param X G3 group element in matrix form
+   * @param X Gal3 group element in matrix form
    */
   void fromMatrix(const MatrixType& X)
   {
@@ -461,9 +438,9 @@ class G3
   }
 
   /**
-   * @brief G3 Adjoint matrix
+   * @brief Gal3 Adjoint matrix
    *
-   * @return G3 group Adjoint matrix
+   * @return Gal3 group Adjoint matrix
    */
   [[nodiscard]] const TMatrixType Adjoint() const
   {
@@ -479,9 +456,9 @@ class G3
   }
 
   /**
-   * @brief G3 Inverse Adjoint matrix
+   * @brief Gal3 Inverse Adjoint matrix
    *
-   * @return G3 group inverse Adjoint matrix
+   * @return Gal3 group inverse Adjoint matrix
    */
   [[nodiscard]] const TMatrixType invAdjoint() const
   {
@@ -498,15 +475,15 @@ class G3
 
  protected:
   /**
-   * @brief G3 left Jacobian Q1 matrix
+   * @brief Gal3 left Jacobian Q1 matrix
    *
    * @param w R3 vector
    * @param v R3 vector
    *
-   * @return G3 left Jacobian Q1 matrix
+   * @return Gal3 left Jacobian Q1 matrix
    */
-  [[nodiscard]] static const typename SO3Type::MatrixType G3leftJacobianQ1(const typename SO3Type::VectorType& w,
-                                                                           const typename SO3Type::VectorType& v)
+  [[nodiscard]] static const typename SO3Type::MatrixType Gal3leftJacobianQ1(const typename SO3Type::VectorType& w,
+                                                                             const typename SO3Type::VectorType& v)
   {
     typename SO3Type::MatrixType p = SO3Type::wedge(w);
     typename SO3Type::MatrixType r = SO3Type::wedge(v);
@@ -532,15 +509,15 @@ class G3
   }
 
   /**
-   * @brief G3 left Jacobian Q2 matrix
+   * @brief Gal3 left Jacobian Q2 matrix
    *
    * @param w R3 vector
    * @param v R3 vector
    *
-   * @return G3 left Jacobian Q2 matrix
+   * @return Gal3 left Jacobian Q2 matrix
    */
-  [[nodiscard]] static const typename SO3Type::MatrixType G3leftJacobianQ2(const typename SO3Type::VectorType& w,
-                                                                           const typename SO3Type::VectorType& v)
+  [[nodiscard]] static const typename SO3Type::MatrixType Gal3leftJacobianQ2(const typename SO3Type::VectorType& w,
+                                                                             const typename SO3Type::VectorType& v)
   {
     typename SO3Type::MatrixType p = SO3Type::wedge(w);
     typename SO3Type::MatrixType r = SO3Type::wedge(v);
@@ -579,13 +556,13 @@ class G3
   }
 
   /**
-   * @brief G3 left Jacobian U1 matrix
+   * @brief Gal3 left Jacobian U1 matrix
    *
    * @param w R3 vector
    *
-   * @return G3 left Jacobian U1 matrix
+   * @return Gal3 left Jacobian U1 matrix
    */
-  [[nodiscard]] static const typename SO3Type::MatrixType G3leftJacobianU1(const typename SO3Type::VectorType& u)
+  [[nodiscard]] static const typename SO3Type::MatrixType Gal3leftJacobianU1(const typename SO3Type::VectorType& u)
   {
     FPType ang = u.norm();
     if (ang < eps_)
@@ -601,16 +578,16 @@ class G3
     return c1 * SO3Type::MatrixType::Identity() + c2 * SO3Type::wedge(ax) + (0.5 - c1) * ax * ax.transpose();
   }
 
-  SO3Type C_;         //!< The SE23 element of the symmetry group ancting on the extended pose
-  IsometriesType t_;  //!< The translation vectors (isometries) of the G3 element
-  Scalar s_;          //!< Scalar factor of the G3 group
+  SO3Type C_;         //!< The SO3 element of the symmetry group
+  IsometriesType t_;  //!< The translation vectors (isometries) of the Gal3 element
+  Scalar s_;          //!< Scalar factor of the Gal3 group
 
   static constexpr FPType eps_ = std::is_same_v<FPType, float> ? 1.0e-6 : 1.0e-9;  //!< Epsilon
 };
 
-using G3d = G3<double>;  //!< The G3 group with double precision floating point
-using G3f = G3<float>;   //!< The G3 group with single precision floating point
+using Gal3d = Gal3<double>;  //!< The Gal3 group with double precision floating point
+using Gal3f = Gal3<float>;   //!< The Gal3 group with single precision floating point
 
 }  // namespace group
 
-#endif  // G3_HPP
+#endif  // GAL3_HPP
