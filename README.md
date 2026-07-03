@@ -1,6 +1,6 @@
 # Lie++
 
-[![License](https://img.shields.io/badge/License-AAUCNS-336B81.svg)](./LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-336B81.svg)](./LICENSE)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/aau-cns/Lie-plusplus/cmake-build-and-test.yml?label=Test)
 
 
@@ -143,7 +143,7 @@ class ComposedGroup
 This code was written within the [Control of Networked System (CNS)](https://www.aau.at/en/smart-systems-technologies/control-of-networked-systems/), University of Klagenfurt.
 
 ### License
-This software is made available to the public to use (_source-available_), licensed under the terms of the BSD-2-Clause-License with no commercial use allowed, the full terms of which are made available in the `LICENSE` file. No license in patents is granted.
+This software is licensed under the terms of the Apache License, Version 2.0, the full terms of which are made available in the `LICENSE` file.
 
 ### Usage for academic purposes
 If you use this software in an academic research setting, please cite the corresponding paper.
