@@ -565,11 +565,11 @@ class SEn3
 
     FPType c1 = (ang - s) / ang_p3;
     FPType c2 = (0.5 * ang_p2 + c - 1.0) / ang_p4;
-    FPType c3 = (ang * (1.0 + 0.5 * c) - 1.5 * s) / ang_p5;
+    FPType c3 = (ang * (2.0 + c) - 3 * s) / ang_p5;
 
     typename SO3Type::MatrixType m1 = p * r + r * p + p * r * p;
     typename SO3Type::MatrixType m2 = p * p * r + r * p * p - 3.0 * p * r * p;
-    typename SO3Type::MatrixType m3 = p * r * p * p + p * p * r * p;
+    typename SO3Type::MatrixType m3 = p * p * r * p;
 
     return 0.5 * r + c1 * m1 + c2 * m2 + c3 * m3;
   }

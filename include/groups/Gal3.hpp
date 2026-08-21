@@ -168,14 +168,15 @@ class Gal3
       return TMatrixType::Identity() + 0.5 * adjoint(u);
     }
     typename SO3Type::MatrixType SO3JL = SO3Type::leftJacobian(w);
+    typename SO3Type::MatrixType SO3Gamma2 = SO3Type::Gamma2(w);
     TMatrixType J = TMatrixType::Identity();
     J.template block<3, 3>(0, 0) = SO3JL;
     J.template block<3, 3>(3, 0) = Gal3leftJacobianQ1(w, v);
     J.template block<3, 3>(3, 3) = SO3JL;
     J.template block<3, 3>(6, 0) = Gal3leftJacobianQ1(w, p) - s * Gal3leftJacobianQ2(w, v);
-    J.template block<3, 3>(6, 3) = -s * Gal3leftJacobianU1(w);
+    J.template block<3, 3>(6, 3) = s * (SO3Gamma2 - SO3JL);
     J.template block<3, 3>(6, 6) = SO3JL;
-    J.template block<3, 1>(6, 9) = SO3Type::Gamma2(w) * v;
+    J.template block<3, 1>(6, 9) = SO3Gamma2 * v;
     return J;
   }
 
@@ -197,9 +198,10 @@ class Gal3
     {
       return TMatrixType::Identity() - 0.5 * adjoint(u);
     }
+    typename SO3Type::MatrixType SO3JL = SO3Type::leftJacobian(w);
     typename SO3Type::MatrixType invSO3JL = SO3Type::invLeftJacobian(w);
     typename SO3Type::MatrixType SO3Gamma2 = SO3Type::Gamma2(w);
-    typename SO3Type::MatrixType U1 = Gal3leftJacobianU1(w);
+    typename SO3Type::MatrixType U1 = SO3JL - SO3Gamma2;
     typename SO3Type::MatrixType Q1p = Gal3leftJacobianQ1(w, p);
     typename SO3Type::MatrixType Q1v = Gal3leftJacobianQ1(w, v);
     typename SO3Type::MatrixType Q2v = Gal3leftJacobianQ2(w, v);
@@ -507,11 +509,11 @@ class Gal3
 
     FPType c1 = (ang - s) / ang_p3;
     FPType c2 = (0.5 * ang_p2 + c - 1.0) / ang_p4;
-    FPType c3 = (ang * (1.0 + 0.5 * c) - 1.5 * s) / ang_p5;
+    FPType c3 = (ang * (2.0 + c) - 3 * s) / ang_p5;
 
     typename SO3Type::MatrixType m1 = p * r + r * p + p * r * p;
     typename SO3Type::MatrixType m2 = p * p * r + r * p * p - 3.0 * p * r * p;
-    typename SO3Type::MatrixType m3 = p * r * p * p + p * p * r * p;
+    typename SO3Type::MatrixType m3 = p * p * r * p;
 
     return 0.5 * r + c1 * m1 + c2 * m2 + c3 * m3;
   }
@@ -539,17 +541,14 @@ class Gal3
     FPType ang_p4 = ang_p3 * ang;
     FPType ang_p5 = ang_p4 * ang;
     FPType ang_p6 = ang_p5 * ang;
-    FPType ang_p7 = ang_p6 * ang;
 
-    FPType c0 = 1 / 6;
+    FPType c0 = FPType(1.0) / FPType(6.0);
     FPType c1 = (0.5 * ang_p2 + c - 1.0) / ang_p4;
     FPType c2 = (c0 * ang_p3 - ang + s) / ang_p5;
     FPType c3 = -(2.0 * c + ang * s - 2.0) / ang_p4;
-    FPType c4 = (c0 * ang_p3 + ang * c + ang - 2.0 * s) / ang_p5;
-    FPType c5 = -(0.75 * ang * c + (0.25 * ang_p2 - 0.75) * s) / ang_p5;
-    FPType c6 = (0.25 * ang * c + 0.5 * ang - 0.75 * s) / ang_p5;
-    FPType c7 = ((0.25 * ang_p2 - 2.0) * c - 1.25 * ang * s + 2.0) / ang_p6;
-    FPType c8 = (c0 * ang_p3 + 1.25 * ang * c + (0.25 * ang_p2 - 1.25) * s) / ang_p7;
+    FPType c4 = (c0 * ang_p3 + ang * (c + 1) - 2.0 * s) / ang_p5;
+    FPType c5 = -(ang * (c0 + 2.0 * c) + (0.5 * ang_p2 - 2.0) * s) / ang_p5;
+    FPType c6 = (0.5 * ang_p2 * (1 + c) - 2.0 * ang * s + 2.0 * (1 - c)) / ang_p6;
 
     typename SO3Type::MatrixType m1 = r * p;
     typename SO3Type::MatrixType m2 = r * p * p;
@@ -557,33 +556,8 @@ class Gal3
     typename SO3Type::MatrixType m4 = p * p * r;
     typename SO3Type::MatrixType m5 = p * r * p;
     typename SO3Type::MatrixType m6 = p * p * r * p;
-    typename SO3Type::MatrixType m7 = p * r * p * p;
-    typename SO3Type::MatrixType m8 = p * p * r * p * p;
 
-    return c0 * r + c1 * m1 + c2 * m2 + c3 * m3 + c4 * m4 + c5 * m5 + c6 * m6 + c7 * m7 + c8 * m8;
-  }
-
-  /**
-   * @brief Gal3 left Jacobian U1 matrix
-   *
-   * @param w R3 vector
-   *
-   * @return Gal3 left Jacobian U1 matrix
-   */
-  [[nodiscard]] static const typename SO3Type::MatrixType Gal3leftJacobianU1(const typename SO3Type::VectorType& u)
-  {
-    FPType ang = u.norm();
-    if (ang < eps_)
-    {
-      return 0.5 * SO3Type::MatrixType::Identity() + 1 / 3 * SO3Type::wedge(u);
-    }
-    typename SO3Type::VectorType ax = u / ang;
-    FPType ang_p2 = pow(ang, 2);
-    FPType s = sin(ang);
-    FPType c = cos(ang);
-    FPType c1 = (ang * s + c - 1) / ang_p2;
-    FPType c2 = (s - ang * c) / ang_p2;
-    return c1 * SO3Type::MatrixType::Identity() + c2 * SO3Type::wedge(ax) + (0.5 - c1) * ax * ax.transpose();
+    return c0 * r + c1 * m1 + c2 * m2 + c3 * m3 + c4 * m4 + c5 * m5 + c6 * m6;
   }
 
   SO3Type C_;         //!< The SO3 element of the symmetry group
