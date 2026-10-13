@@ -38,12 +38,12 @@ This is a header-only C++ library meant to be used within other projects. Either
 ```
 FetchContent_Declare(
     LiePlusPlus
-    GIT_REPOSITORY  
+    GIT_REPOSITORY
     GIT_TAG         main
     GIT_SHALLOW     TRUE
     GIT_PROGRESS    TRUE
 )
-list(APPEND external LiePlusPlus) 
+list(APPEND external LiePlusPlus)
 list(APPEND include_dirs ${LIEPLUSPLUS_INCLUDE_DIR})
 list(APPEND libs LiePlusPlus Eigen3::Eigen)
 ```
@@ -54,7 +54,8 @@ Two mini examples on how to use the base groups of the library and how to compos
 ### Base groups usage
 
 ```cpp
-#include <groups/SEn.hpp>
+#include <groups/SEn3.hpp>
+#include <iostream>
 
 int main(int argc, char **argv)
 {
@@ -63,35 +64,36 @@ int main(int argc, char **argv)
   using Vector3d = Eigen::Matrix<double, 3, 1>;
   using Vector9d = Eigen::Matrix<double, 9, 1>;
   using Matrix9d = Eigen::Matrix<double, 9, 9>;
-  
-  # Define random extended pose X via exponential map
+
+  // Define random extended pose X via exponential map
   Vector9d x = Vector9d::Random();
   SE23d X = SE23d::exp(x);
-  
-  # Define Extended pose Y with identity rotation, and given velocity and position
+
+  // Define Extended pose Y with identity rotation, and given velocity and position
   Vector3d p = Vector3d(1, 2, 3);
   Vector3d v = Vector3d(0.1, 0.1, 0.3);
   SO3d R = SO3d();
   SE23d Y = SE23d(R, {v, p});
-  
-  # Get extended pose composition Z = XY
+
+  // Get extended pose composition Z = XY
   SE23d Z = X*Y;
-  
-  # print Z as matrix
+
+  // print Z as matrix
   std::cout << Z.asMatrix() << std::endl;
-  
-  # print Rotational component of Z as quaternion, position and velocity
-  std::cout << Z.q() << '\n' << Z.p() << '\n'<< Z.v() << '\n' std::endl;
-  
-  # get Adjoint matrix of SE23
+
+  // print Rotational component of Z as quaternion, position and velocity
+  std::cout << Z.q() << '\n' << Z.p() << '\n'<< Z.v() << '\n' << std::endl;
+
+  // get Adjoint matrix of SE23
   Matrix9d AdZ = Z.Adjoint();
+  return 0;
 }
 ```
 
 ### Composition of groups
 
 ```cpp
-#include <groups/SEn.hpp>
+#include <groups/SEn3.hpp>
 
 /**
  * @brief Composition of SO(3) and SE(3) via direct product
@@ -105,13 +107,13 @@ class ComposedGroup
     using Vector3 = Eigen::Matrix<FPType, 3, 1>;
     using Vector6 = Eigen::Matrix<FPType, 6, 1>;
     using Vector9 = Eigen::Matrix<FPType, 9, 1>;
-  
+
     ComposedGroup() : C_(), P_() {};
-    
+
     ComposedGroup(const SO3& C, const SE3& P) : C_(C), P_(P) {};
-    
+
     // other constructors ...
-    
+
     [[nodiscard]] static const ComposedGroup exp(const Vector9& u)
     {
       return ComposedGroup(SO3::exp(u.template block<3, 1>(0, 0)), SE3::exp(u.template block<6, 1>(3, 0)));
@@ -124,19 +126,19 @@ class ComposedGroup
       u.template block<6, 1>(3, 0) = SE3::log(X.P_);
       return u;
     }
-    
+
     [[nodiscard]] const ComposedGroup operator*(const ComposedGroup& other) const
     {
       return ComposedGroup(C_ * other.C_, P_ * other.P_);
     }
-    
+
     // other methods ...
-    
+
   private:
     SO3 C_;
     SE3 P_;
-    
-}
+
+};
 ```
 
 ## Credit
